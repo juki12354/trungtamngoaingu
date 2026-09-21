@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import { createServer } from "vite";
 import { createApp } from "../server/app.js";
 import config from "../vite.config.js";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 test("development proxy preserves origin checks for browser login", async () => {
   const app = createApp({ dbPath: ":memory:", demo: true });
@@ -12,6 +15,7 @@ test("development proxy preserves origin checks for browser login", async () => 
   const entry = config.server.proxy["/api"];
   const vite = await createServer({
     configFile: false,
+    cacheDir: mkdtempSync(join(tmpdir(), "vec-vite-test-")),
     logLevel: "silent",
     server: {
       ...config.server,

@@ -7,6 +7,7 @@ Môi trường: Windows, Node.js 24.17.0. Kiểm thử trình duyệt bằng Chr
 - `npm test`: **16/16 đạt**, sử dụng database riêng.
 - `npm run build`: **đạt**.
 - `npm run test:e2e`: **6/6 đạt** trên bản đã build.
+- Kiểm tra trực tiếp ở `http://127.0.0.1:5173`: đăng nhập qua proxy thành công, cổng học viên hiển thị lớp đã xác nhận, đăng xuất từ menu 320px thành công; không có lỗi JavaScript.
 - `npm audit` khi cài thư viện: không phát hiện lỗ hổng.
 
 ## Các luồng đã kiểm tra
@@ -27,5 +28,6 @@ API kiểm tra thêm: phân quyền, đăng xuất vô hiệu session, chống t
 - Một số chữ phụ thiếu tương phản: điều chỉnh màu và kiểm tra lại với Axe.
 - Bổ sung đăng xuất và liên kết đúng vai trò trong menu điện thoại.
 - Proxy Vite mặc định đổi Host làm kiểm tra Origin từ chối đăng nhập ở cổng 5173: đặt `changeOrigin: false`, giữ kiểm tra chống yêu cầu khác nguồn tại API. Có regression test chạy qua Vite thật.
+- Regression test Vite dùng cache tạm riêng, tránh ảnh hưởng dependency cache của server phát triển đang chạy.
 
 Ảnh responsive: `test-results/home-320.png`, `home-768.png`, `home-1024.png`, `home-1440.png`. Dữ liệu kiểm thử không được ghi vào database demo đang chạy.
