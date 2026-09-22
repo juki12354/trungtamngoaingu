@@ -54,6 +54,54 @@ test("admin routes reject guests and students", async () => {
     403,
   );
 });
+
+test("teacher achievements persist through admin editing and appear in the public catalog", async () => {
+  const data = {
+    name: "Giáo viên kiểm thử",
+    degree: "TESOL",
+    experience: 4,
+    specialty: "Giao tiếp",
+    image: "/images/teacher1.jpg",
+    description: "Hồ sơ dùng để kiểm thử.",
+    achievements: "Biên soạn bài tập giao tiếp\nHướng dẫn câu lạc bộ tiếng Anh",
+  };
+  assert.equal((await request("/admin/teachers", "POST", data)).status, 401);
+  assert.equal(
+    (await request("/admin/teachers", "POST", data, student)).status,
+    403,
+  );
+  const created = await request("/admin/teachers", "POST", data, admin);
+  assert.equal(created.status, 201);
+  assert.equal(created.body.achievements, data.achievements);
+  const edited = await request(
+    `/admin/teachers/${created.body.id}`,
+    "PATCH",
+    { achievements: "Hướng dẫn dự án thuyết trình" },
+    admin,
+  );
+  assert.equal(edited.status, 200);
+  const catalog = (await request("/catalog")).body;
+  assert.equal(
+    catalog.teachers.find((t) => t.id === created.body.id).achievements,
+    "Hướng dẫn dự án thuyết trình",
+  );
+  assert.equal(
+    (
+      await request(
+        `/admin/teachers/${created.body.id}`,
+        "PATCH",
+        { achievements: "a".repeat(3001) },
+        admin,
+      )
+    ).status,
+    400,
+  );
+  assert.equal(
+    (await request(`/admin/teachers/${created.body.id}`, "DELETE", null, admin))
+      .status,
+    200,
+  );
+});
 test("login rejects invalid credentials and logout revokes the session", async () => {
   assert.equal(
     (

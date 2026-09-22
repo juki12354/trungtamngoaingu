@@ -260,7 +260,7 @@ export default function Home() {
           to="/giao-vien"
         />
         <div className="teacher-grid">
-          {catalog.teachers.map((t) => (
+          {catalog.teachers.slice(0, 3).map((t) => (
             <Link to={`/giao-vien/${t.id}`} className="teacher-card" key={t.id}>
               <div className="teacher-photo">
                 <img src={t.image} alt={t.name} loading="lazy" />

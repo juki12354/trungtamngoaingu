@@ -304,6 +304,10 @@ export function Teachers() {
       </PageHeading>
       <section className="section container">
         <div className="teacher-grid">
+          <p className="teacher-disclosure span-all">
+            {catalog.teachers.length} hồ sơ giáo viên minh họa. Bằng cấp và
+            thành tích dưới đây là dữ liệu mẫu phục vụ đồ án.
+          </p>
           {catalog.teachers.map((t) => (
             <article className="teacher-card" key={t.id}>
               <Link to={`/giao-vien/${t.id}`} className="teacher-photo">
@@ -319,6 +323,17 @@ export function Teachers() {
               <p>{t.degree}</p>
               <span className="badge">{t.experience} năm kinh nghiệm</span>
               <p>{t.description}</p>
+              {t.achievements && (
+                <div className="teacher-highlight">
+                  <strong>Thành tích nổi bật</strong>
+                  <p>
+                    {t.achievements.split("\n").find((line) => line.trim())}
+                  </p>
+                </div>
+              )}
+              <Link className="text-link" to={`/giao-vien/${t.id}`}>
+                Xem hồ sơ & thành tích <ArrowUpRight size={16} />
+              </Link>
             </article>
           ))}
         </div>
@@ -342,9 +357,31 @@ export function TeacherDetail() {
       <section className="container section teacher-detail">
         <img src={t.image} alt={t.name} />
         <div>
+          <p className="teacher-disclosure">
+            Hồ sơ, bằng cấp và thành tích minh họa cho đồ án.
+          </p>
           <span className="badge">{t.experience} năm kinh nghiệm</span>
           <h2>{t.degree}</h2>
           <p>{t.description}</p>
+          <section
+            className="teacher-achievements"
+            aria-labelledby="achievements-title"
+          >
+            <h3 id="achievements-title">Thành tích & chuyên môn nổi bật</h3>
+            {t.achievements?.trim() ? (
+              <ul>
+                {t.achievements
+                  .split("\n")
+                  .map((line) => line.trim())
+                  .filter(Boolean)
+                  .map((item, index) => (
+                    <li key={index}>{item}</li>
+                  ))}
+              </ul>
+            ) : (
+              <p>Thông tin thành tích đang được cập nhật.</p>
+            )}
+          </section>
           <h3>Lớp học đang phụ trách</h3>
           <ClassTable
             classes={catalog.classes.filter((c) => c.teacherId === t.id)}

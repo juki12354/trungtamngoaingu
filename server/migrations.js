@@ -10,6 +10,7 @@ export function migrate(db) {
   };
   db.exec("BEGIN IMMEDIATE");
   try {
+    add("teachers", "achievements", "TEXT NOT NULL DEFAULT ''");
     add("classes", "weekdays", "TEXT NOT NULL DEFAULT '[]'");
     add("classes", "startTime", "TEXT NOT NULL DEFAULT ''");
     add("classes", "endTime", "TEXT NOT NULL DEFAULT ''");

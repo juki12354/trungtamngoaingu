@@ -97,6 +97,8 @@ export const teachers = [
     degree: "Thạc sĩ TESOL · IELTS 8.5",
     experience: 8,
     specialty: "IELTS · Tiếng Anh học thuật",
+    achievements:
+      "IELTS Academic 8.5\nBiên soạn lộ trình IELTS Foundation gồm 24 buổi\nPhụ trách chuyên đề phản hồi bài viết và luyện Speaking tại trung tâm",
     image: "/images/teacher1.jpg",
     description:
       "Cô Minh Anh tin rằng mỗi học viên đều có một cách học riêng. Các buổi học của cô kết hợp tư duy phản biện với những hoạt động thực hành gần gũi.",
@@ -107,6 +109,8 @@ export const teachers = [
     degree: "CELTA · University of Leeds",
     experience: 10,
     specialty: "Giao tiếp · English for Work",
+    achievements:
+      "Chứng chỉ giảng dạy tiếng Anh CELTA\nThiết kế bộ tình huống giao tiếp dành cho người đi làm\nĐiều phối câu lạc bộ English Speaking Club",
     image: "/images/teacher2.jpg",
     description:
       "Thầy David tạo ra một không gian học cởi mở, nơi mọi câu hỏi đều được chào đón. Thầy chú trọng phát âm và khả năng sử dụng tiếng Anh thực tế.",
@@ -117,9 +121,83 @@ export const teachers = [
     degree: "Cử nhân Sư phạm Anh · TESOL",
     experience: 6,
     specialty: "Trẻ em · Tiếng Anh thiếu niên",
+    achievements:
+      "Chứng chỉ TESOL\nXây dựng bộ hoạt động học qua truyện và trò chơi cho trẻ 6–11 tuổi\nHướng dẫn dự án thuyết trình My Green School cho học viên thiếu niên",
     image: "/images/teacher3.jpg",
     description:
       "Cô Linh mang những câu chuyện, trò chơi và dự án sáng tạo vào lớp học, giúp các bạn nhỏ học tiếng Anh với sự tò mò và niềm vui.",
+  },
+  {
+    id: 4,
+    name: "Lê Hoàng Nam",
+    degree: "Cử nhân Ngôn ngữ Anh · IELTS 8.0",
+    experience: 7,
+    specialty: "IELTS · Reading & Writing",
+    image: "/images/teacher4.svg",
+    description:
+      "Thầy Nam giúp học viên xây nền tảng đọc hiểu, lập dàn ý và viết bài có dẫn chứng. Mỗi buổi học có bài luyện tập ngắn và phản hồi cụ thể để học viên tự theo dõi tiến bộ.",
+    achievements:
+      "IELTS Academic 8.0\nBiên soạn bộ chuyên đề IELTS Writing Task 1 và Task 2\nPhụ trách workshop lập kế hoạch tự học IELTS cho sinh viên",
+  },
+  {
+    id: 5,
+    name: "Phạm Thu Hà",
+    degree: "Cử nhân Ngôn ngữ Anh · CELTA",
+    experience: 6,
+    specialty: "Giao tiếp · Phát âm",
+    image: "/images/teacher5.svg",
+    description:
+      "Cô Hà chú trọng phát âm dễ hiểu và phản xạ trong tình huống đời sống. Học viên được luyện nói theo cặp, ghi âm và nhận góp ý trong không khí thân thiện.",
+    achievements:
+      "Chứng chỉ giảng dạy CELTA\nXây dựng bộ học liệu phát âm và nối âm cho người Việt\nTổ chức chuỗi hoạt động giao tiếp English in Daily Life",
+  },
+  {
+    id: 6,
+    name: "Nguyễn Mai Chi",
+    degree: "Cử nhân Sư phạm Anh · TESOL",
+    experience: 5,
+    specialty: "Tiếng Anh trẻ em · Học qua hoạt động",
+    image: "/images/teacher6.svg",
+    description:
+      "Cô Chi kết hợp vận động, bài hát và kể chuyện để trẻ làm quen tiếng Anh tự nhiên. Cô ưu tiên sự tự tin và tạo cơ hội để mỗi bạn nhỏ đều được tham gia.",
+    achievements:
+      "Chứng chỉ TESOL\nThiết kế bộ trò chơi từ vựng cho chương trình Kids English\nHướng dẫn hoạt động kể chuyện tiếng Anh Storytelling Day",
+  },
+  {
+    id: 7,
+    name: "Trần Gia Bảo",
+    degree: "Cử nhân Sư phạm Anh · IELTS 8.0",
+    experience: 5,
+    specialty: "Tiếng Anh thiếu niên · Thuyết trình",
+    image: "/images/teacher7.svg",
+    description:
+      "Thầy Bảo đồng hành cùng học sinh ở phần ngữ pháp học đường và kỹ năng trình bày ý tưởng. Các dự án nhóm giúp học viên ứng dụng tiếng Anh vào chủ đề gần gũi.",
+    achievements:
+      "IELTS Academic 8.0\nXây dựng chuyên đề thuyết trình bằng tiếng Anh cho học sinh 12–15 tuổi\nHướng dẫn câu lạc bộ tranh biện tiếng Anh tại trung tâm",
+  },
+  {
+    id: 8,
+    name: "Đặng Ngọc Lan",
+    degree: "Cử nhân Ngôn ngữ Anh · TESOL",
+    experience: 4,
+    specialty: "Tiếng Anh căn bản · Người mới bắt đầu",
+    image: "/images/teacher8.svg",
+    description:
+      "Cô Lan chia nhỏ kiến thức và hướng dẫn từng bước cho người bắt đầu lại. Bài học kết hợp phát âm, mẫu câu ngắn và ôn tập có hệ thống để học viên dễ duy trì thói quen.",
+    achievements:
+      "Chứng chỉ TESOL\nBiên soạn chương trình tiếng Anh căn bản 16 buổi\nPhát triển bộ bài tập ôn phát âm và ngữ pháp nền tảng",
+  },
+  {
+    id: 9,
+    name: "Võ Quốc Huy",
+    degree: "Cử nhân Tiếng Anh thương mại · TOEIC 980",
+    experience: 9,
+    specialty: "English for Work · Tiếng Anh công sở",
+    image: "/images/teacher9.svg",
+    description:
+      "Thầy Huy hướng dẫn sử dụng tiếng Anh trong email, cuộc họp và phỏng vấn. Lớp học tập trung vào các tình huống công việc và cách diễn đạt rõ ràng, lịch sự.",
+    achievements:
+      "TOEIC Listening & Reading 980/990\nThiết kế bộ tình huống viết email và họp bằng tiếng Anh\nPhụ trách chuyên đề phỏng vấn tiếng Anh cho sinh viên mới tốt nghiệp",
   },
 ];
 const futureDate = (days) => {

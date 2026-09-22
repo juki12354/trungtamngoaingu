@@ -82,6 +82,11 @@ export const schemas = {
     degree: text,
     experience: z.number().int().min(0).max(60),
     specialty: text,
+    achievements: z
+      .string()
+      .trim()
+      .max(3000, "Thành tích tối đa 3.000 ký tự.")
+      .default(""),
     image,
     description: long,
   }),

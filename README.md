@@ -17,6 +17,8 @@ Có thể nhấp đúp **CHAY-WEBSITE.cmd** để cài thư viện nếu cần r
 
 Để có nhiều ca học cho từng khóa trong database mới, chạy `npm.cmd run seed:classes`. Lệnh thêm 18 lớp, tổng cộng 24 lớp mẫu; chạy lại không tạo trùng. Xem [chi tiết các ca học](docs/CLASS-SCHEDULES.md).
 
+Database mới có 9 giáo viên mẫu kèm bằng cấp, kinh nghiệm và thành tích. Với database cũ, chạy `npm.cmd run seed:teachers` để bổ sung hồ sơ; lệnh giữ nội dung thành tích đã chỉnh sửa và không đổi giáo viên của các lớp. Admin → Giáo viên → Sửa có trường **Thành tích nổi bật**, mỗi dòng hiển thị thành một mục trong hồ sơ công khai. Các thành tích là dữ liệu minh họa của đồ án.
+
 Để chạy bản đã build:
 
 ```powershell

@@ -18,3 +18,5 @@
 Font **Be Vietnam Pro** từ Google Fonts, bản sao cục bộ trong `public/fonts/`, giấy phép SIL Open Font License tại `public/fonts/OFL.txt`.
 
 Biểu tượng: **Lucide React**. Logo chữ được tạo bằng CSS; các nét gạch chân là SVG trong mã nguồn.
+
+`teacher4.svg` đến `teacher9.svg` là hình đại diện chữ viết tắt do dự án tạo, không phải ảnh chân dung người thật. Hồ sơ, chứng chỉ và thành tích giáo viên đều là dữ liệu minh họa, không xác nhận thông tin của một cá nhân thực tế.

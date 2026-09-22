@@ -33,6 +33,7 @@ erDiagram
         text name
         text degree
         integer experience
+        text achievements
     }
     classes {
         integer id PK

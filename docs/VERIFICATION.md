@@ -5,9 +5,9 @@ Môi trường: Windows, Node.js 24.17.0. Kiểm thử trình duyệt bằng Chr
 ## Kết quả
 
 - `npm run lint`: **đạt**, không có lỗi hoặc cảnh báo ESLint.
-- `npm test`: **36/36 đạt**, sử dụng database riêng.
+- `npm test`: **38/38 đạt**, sử dụng database riêng.
 - `npm run build`: **đạt**.
-- `npm run test:e2e`: **9/9 đạt** trên bản đã build.
+- `npm run test:e2e`: **10/10 đạt** trên bản đã build.
 - Kiểm tra trực tiếp ở `http://127.0.0.1:5173`: đăng nhập qua proxy thành công, cổng học viên hiển thị lớp đã xác nhận, đăng xuất từ menu 320px thành công; không có lỗi JavaScript.
 - `npm audit` khi cài thư viện: không phát hiện lỗ hổng.
 - `npm run backup`: tạo được bản sao SQLite nhất quán. Số bản ghi sau migration khớp backup trước nâng cấp: 3 tài khoản, 6 khóa, 3 giáo viên, 6 lớp, 2 đăng ký, 15 câu hỏi, 1 kết quả test và 3 tin tức. `PRAGMA integrity_check` trả `ok`.
@@ -26,6 +26,7 @@ Môi trường: Windows, Node.js 24.17.0. Kiểm thử trình duyệt bằng Chr
 8. Tư vấn → cập nhật trạng thái/ghi chú → lọc kết quả; xuất Excel. Các mục Báo cáo, Tài liệu, Tư vấn, Lớp học kiểm tra tại 360/1440px và Axe tự động.
 9. Tạo lớp trùng lịch giáo viên bị từ chối; đổi sang ca không trùng tạo được lớp qua giao diện.
 10. Bổ sung 18 lớp bằng `seed:classes`: database hiện tại có 24 lớp, mỗi khóa 4 ca. Trình duyệt xác nhận trang Lịch khai giảng lọc được 4 lớp/khóa, form Đăng ký có đủ 4 lựa chọn và chi tiết khóa trẻ em có đủ 4 lớp. Ba kiểm thử mới kiểm tra đủ số buổi/ngày học, không trùng lịch, chạy lại không nhân đôi và không đổi lịch lớp đã có đăng ký.
+11. Giáo viên: 9 hồ sơ có thành tích; kiểm tra Admin sửa thành tích rồi đọc lại ở trang công khai, giới hạn độ dài và phân quyền API. Script nâng cấp bổ sung 6 giáo viên và làm đầy thành tích trống, giữ nội dung đã sửa và phân công lớp. Hồ sơ kiểm tra ở 360/1440px, không tràn ngang và không có vi phạm Axe trong phạm vi kiểm tra.
 
 API kiểm tra thêm: phân quyền, đăng xuất vô hiệu session, chống trùng đăng ký, sức chứa khi duyệt, dữ liệu ngày/điểm không hợp lệ, ẩn đáp án và tài liệu công khai, chống tự nâng quyền, hồ sơ và kết quả chỉ thuộc tài khoản hiện tại, database giữ dữ liệu sau khi mở lại.
 

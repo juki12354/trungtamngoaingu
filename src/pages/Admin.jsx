@@ -72,6 +72,7 @@ const fields = {
     ["specialty", "Chuyên môn"],
     ["image", "Ảnh"],
     ["description", "Giới thiệu", "textarea"],
+    ["achievements", "Thành tích nổi bật (mỗi dòng một mục)", "textarea"],
   ],
   students: [
     ["name", "Họ và tên"],
@@ -734,7 +735,7 @@ function EditDialog({ resource, item, onClose, onSaved }) {
                 ? item.grades?.[key]
                 : item[key];
             const required =
-              !["material", "birthday", "note"].includes(key) &&
+              !["material", "birthday", "note", "achievements"].includes(key) &&
               type !== "grade" &&
               type !== "students" &&
               !(key === "password" && item.id);
@@ -793,7 +794,7 @@ function EditDialog({ resource, item, onClose, onSaved }) {
                       defaultValue={value || ""}
                       required={required}
                       rows={key === "content" || key === "material" ? 6 : 3}
-                      maxLength={20000}
+                      maxLength={key === "achievements" ? 3000 : 20000}
                     />
                   ) : (
                     <input

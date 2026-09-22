@@ -3829,3 +3829,45 @@ td .text-link {
   padding: 7px;
   white-space: nowrap;
 }
+
+.teacher-disclosure {
+  color: #586950;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  margin: 0 0 24px;
+}
+.span-all {
+  grid-column: 1 / -1;
+}
+.teacher-highlight {
+  margin: 18px 0;
+  padding: 16px;
+  background: #f1f5eb;
+  border-left: 3px solid #8ca76c;
+  border-radius: 0 8px 8px 0;
+}
+.teacher-highlight strong {
+  font-size: 0.8rem;
+}
+.teacher-card .teacher-highlight p {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+}
+.teacher-achievements {
+  margin: 28px 0;
+  padding: 24px;
+  background: #f1f5eb;
+  border-radius: 12px;
+}
+.teacher-achievements h3 {
+  margin-top: 0;
+}
+.teacher-achievements ul {
+  padding-left: 22px;
+  margin-bottom: 0;
+}
+.teacher-achievements li {
+  margin: 12px 0;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}

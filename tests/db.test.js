@@ -11,7 +11,7 @@ test("legacy migration preserves registrations and is safe to run again", () => 
   const db = new DatabaseSync(":memory:");
   try {
     db.exec(
-      `CREATE TABLE users(id INTEGER PRIMARY KEY); CREATE TABLE classes(id INTEGER PRIMARY KEY,schedule TEXT); CREATE TABLE enrollments(id INTEGER PRIMARY KEY,userId INTEGER,classId INTEGER,email TEXT,status TEXT); CREATE TABLE contacts(id INTEGER PRIMARY KEY,message TEXT); CREATE TABLE placement_results(id INTEGER PRIMARY KEY,score INTEGER); CREATE TABLE metadata(key TEXT PRIMARY KEY,value TEXT); INSERT INTO users VALUES (1); INSERT INTO classes VALUES(1,'Thứ 2, Thứ 4 · 18:30 – 20:30'); INSERT INTO enrollments VALUES(1,1,1,'old@example.com','pending'); INSERT INTO contacts VALUES(1,'Lời nhắn cần giữ'); INSERT INTO placement_results VALUES(1,10);`,
+      `CREATE TABLE teachers(id INTEGER PRIMARY KEY,name TEXT); CREATE TABLE users(id INTEGER PRIMARY KEY); CREATE TABLE classes(id INTEGER PRIMARY KEY,schedule TEXT); CREATE TABLE enrollments(id INTEGER PRIMARY KEY,userId INTEGER,classId INTEGER,email TEXT,status TEXT); CREATE TABLE contacts(id INTEGER PRIMARY KEY,message TEXT); CREATE TABLE placement_results(id INTEGER PRIMARY KEY,score INTEGER); CREATE TABLE metadata(key TEXT PRIMARY KEY,value TEXT); INSERT INTO users VALUES (1); INSERT INTO classes VALUES(1,'Thứ 2, Thứ 4 · 18:30 – 20:30'); INSERT INTO enrollments VALUES(1,1,1,'old@example.com','pending'); INSERT INTO contacts VALUES(1,'Lời nhắn cần giữ'); INSERT INTO placement_results VALUES(1,10);`,
     );
     migrate(db);
     assert.equal(
