@@ -15,6 +15,8 @@ Mở **http://127.0.0.1:5173**. API chạy ở cổng **3001**. Dừng bằng `C
 
 Có thể nhấp đúp **CHAY-WEBSITE.cmd** để cài thư viện nếu cần rồi chạy website.
 
+Để có nhiều ca học cho từng khóa trong database mới, chạy `npm.cmd run seed:classes`. Lệnh thêm 18 lớp, tổng cộng 24 lớp mẫu; chạy lại không tạo trùng. Xem [chi tiết các ca học](docs/CLASS-SCHEDULES.md).
+
 Để chạy bản đã build:
 
 ```powershell

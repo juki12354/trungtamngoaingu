@@ -5,7 +5,7 @@ Môi trường: Windows, Node.js 24.17.0. Kiểm thử trình duyệt bằng Chr
 ## Kết quả
 
 - `npm run lint`: **đạt**, không có lỗi hoặc cảnh báo ESLint.
-- `npm test`: **33/33 đạt**, sử dụng database riêng.
+- `npm test`: **36/36 đạt**, sử dụng database riêng.
 - `npm run build`: **đạt**.
 - `npm run test:e2e`: **9/9 đạt** trên bản đã build.
 - Kiểm tra trực tiếp ở `http://127.0.0.1:5173`: đăng nhập qua proxy thành công, cổng học viên hiển thị lớp đã xác nhận, đăng xuất từ menu 320px thành công; không có lỗi JavaScript.
@@ -25,6 +25,7 @@ Môi trường: Windows, Node.js 24.17.0. Kiểm thử trình duyệt bằng Chr
 7. Đăng ký khách → Admin tiếp nhận/tạo tài khoản → duyệt lớp → upload PDF → học viên xem lịch tuần và tải tệp → đổi mật khẩu → đăng nhập bằng mật khẩu mới.
 8. Tư vấn → cập nhật trạng thái/ghi chú → lọc kết quả; xuất Excel. Các mục Báo cáo, Tài liệu, Tư vấn, Lớp học kiểm tra tại 360/1440px và Axe tự động.
 9. Tạo lớp trùng lịch giáo viên bị từ chối; đổi sang ca không trùng tạo được lớp qua giao diện.
+10. Bổ sung 18 lớp bằng `seed:classes`: database hiện tại có 24 lớp, mỗi khóa 4 ca. Trình duyệt xác nhận trang Lịch khai giảng lọc được 4 lớp/khóa, form Đăng ký có đủ 4 lựa chọn và chi tiết khóa trẻ em có đủ 4 lớp. Ba kiểm thử mới kiểm tra đủ số buổi/ngày học, không trùng lịch, chạy lại không nhân đôi và không đổi lịch lớp đã có đăng ký.
 
 API kiểm tra thêm: phân quyền, đăng xuất vô hiệu session, chống trùng đăng ký, sức chứa khi duyệt, dữ liệu ngày/điểm không hợp lệ, ẩn đáp án và tài liệu công khai, chống tự nâng quyền, hồ sơ và kết quả chỉ thuộc tài khoản hiện tại, database giữ dữ liệu sau khi mở lại.
 

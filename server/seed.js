@@ -136,7 +136,7 @@ export const classes = courses.map((c, i) => ({
   endDate: futureDate(110 + i * 3),
   schedule:
     i === 4
-      ? "Thứ 2, Thứ 4 · 20:30 – 21:30"
+      ? "Thứ 2, Thứ 4 · 16:00 – 18:00"
       : i === 5
         ? "Thứ 7, Chủ nhật · 08:00 – 10:00"
         : i % 2
