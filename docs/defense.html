@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Bảo vệ đồ án · Vinh English Center</title>
+    <style>
+      @font-face {
+        font-family: "Be Vietnam Pro";
+        src: url("../public/fonts/be-vietnam-1.ttf");
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #123e32;
+        color: #173c31;
+        font-family: "Be Vietnam Pro", Arial, sans-serif;
+      }
+      main {
+        max-width: 1440px;
+        margin: auto;
+      }
+      .slide {
+        display: none;
+        min-height: 810px;
+        padding: 72px 90px;
+        background: #f7f6ef;
+        position: relative;
+        overflow: hidden;
+      }
+      .slide.active {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .slide.cover {
+        background: #173f32;
+        color: #fff;
+      }
+      .eyebrow {
+        font-size: 18px;
+        letter-spacing: 3px;
+        color: #64766b;
+        margin: 0 0 20px;
+      }
+      .cover .eyebrow {
+        color: #d4debc;
+      }
+      h1 {
+        font-size: 64px;
+        line-height: 1.18;
+        max-width: 950px;
+        font-weight: 600;
+        margin: 0 0 32px;
+      }
+      h2 {
+        font-size: 43px;
+        line-height: 1.25;
+        margin: 0 0 40px;
+        font-weight: 600;
+      }
+      p,
+      li,
+      td,
+      th {
+        font-size: 25px;
+        line-height: 1.6;
+      }
+      p {
+        margin: 0 0 22px;
+      }
+      ul,
+      ol {
+        padding-left: 32px;
+        margin: 0;
+      }
+      li {
+        padding: 7px 0;
+      }
+      strong {
+        font-weight: 600;
+      }
+      .number {
+        position: absolute;
+        right: 55px;
+        bottom: 32px;
+        font-size: 17px;
+        color: #64766b;
+      }
+      .cover .number {
+        color: #d4debc;
+      }
+      .subtle {
+        font-size: 19px;
+        color: #64766b;
+        margin-top: 28px;
+      }
+      .cover .subtle {
+        color: #d4debc;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      td,
+      th {
+        text-align: left;
+        padding: 17px 20px;
+        border-bottom: 1px solid #b9c8be;
+        vertical-align: top;
+        font-size: 22px;
+      }
+      th {
+        font-weight: 600;
+        color: #536b5c;
+      }
+      .code {
+        font-family: Consolas, monospace;
+        letter-spacing: 0;
+        font-size: 26px;
+      }
+      .architecture {
+        font-size: 36px;
+        line-height: 1.8;
+        border-left: 5px solid #6b7e52;
+        padding-left: 32px;
+      }
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 48px;
+      }
+      .split h3 {
+        font-size: 26px;
+        margin: 0 0 15px;
+      }
+      .controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        padding: 16px;
+        color: white;
+        font-size: 15px;
+      }
+      .controls button {
+        font: inherit;
+        padding: 10px 20px;
+        border: 1px solid #cddbbd;
+        border-radius: 4px;
+        background: transparent;
+        color: white;
+        cursor: pointer;
+      }
+      .controls button:disabled {
+        opacity: 0.4;
+      }
+      a {
+        color: inherit;
+      }
+      .hero {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 37%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.25;
+      }
+      .cover h1,
+      .cover p {
+        position: relative;
+        max-width: 900px;
+      }
+      @media (max-width: 800px) {
+        .slide {
+          min-height: 85vh;
+          padding: 50px 26px;
+        }
+        h1 {
+          font-size: 40px;
+        }
+        h2 {
+          font-size: 31px;
+        }
+        p,
+        li {
+          font-size: 19px;
+        }
+        td,
+        th {
+          font-size: 16px;
+          padding: 10px;
+        }
+        .architecture {
+          font-size: 24px;
+        }
+        .split {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+        .number {
+          right: 24px;
+          bottom: 18px;
+        }
+      }
+      @page {
+        size: 15in 8.4375in;
+        margin: 0;
+      }
+      @media print {
+        body {
+          background: white;
+        }
+        main {
+          max-width: none;
+        }
+        .slide,
+        .slide.active {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          width: 1440px;
+          height: 810px;
+          min-height: 0;
+          break-after: page;
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+        .slide:last-child {
+          break-after: auto;
+        }
+        .controls {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="slide cover active">
+        <img class="hero" src="../public/images/hero.jpg" alt="" />
+        <p class="eyebrow">ĐỒ ÁN LẬP TRÌNH WEB</p>
+        <h1>Website trung tâm<br />ngoại ngữ</h1>
+        <p>Vinh English Center</p>
+        <p class="subtle">
+          React + Express + SQLite<br />Người trình bày: bổ sung tên, lớp và mã
+          sinh viên
+        </p>
+        <span class="number">01</span>
+      </section>
+      <section class="slide">
+        <h2>Bài toán và phạm vi</h2>
+        <p>
+          Người học cần tìm lớp phù hợp và theo dõi việc học.<br />Trung tâm cần
+          quản lý đăng ký, lịch và tài liệu tập trung.
+        </p>
+        <ul>
+          <li>Giới thiệu khóa học, học phí và giáo viên.</li>
+          <li>Kiểm tra trình độ, đăng ký lớp và tiếp nhận học viên.</li>
+          <li>Quản lý lớp, kết quả học tập, tư vấn và báo cáo.</li>
+        </ul>
+        <p class="subtle">
+          Dữ liệu trung tâm là minh họa. Phạm vi hiện tại phục vụ đồ án chạy
+          local.
+        </p>
+        <span class="number">02</span>
+      </section>
+      <section class="slide">
+        <h2>Người dùng và quyền truy cập</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Vai trò</th>
+              <th>Hoạt động chính</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Khách</td>
+              <td>Tìm khóa học, làm test, đăng ký lớp, gửi lời nhắn</td>
+            </tr>
+            <tr>
+              <td>Học viên</td>
+              <td>Xem lịch và điểm, tải tài liệu đúng lớp, đổi mật khẩu</td>
+            </tr>
+            <tr>
+              <td>Admin</td>
+              <td>
+                CRUD, xác minh tiếp nhận, duyệt lớp, quản lý lịch và báo cáo
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="subtle">
+          API kiểm tra quyền ở server. Ẩn nút trên giao diện không thay thế phân
+          quyền.
+        </p>
+        <span class="number">03</span>
+      </section>
+      <section class="slide">
+        <h2>Kiến trúc ứng dụng</h2>
+        <div class="architecture">
+          <strong>React + Vite</strong> — giao diện tiếng Việt<br /><strong
+            >Express + Zod</strong
+          >
+          — API, quyền và nghiệp vụ<br /><strong>SQLite</strong> — dữ liệu và
+          tài liệu học tập
+        </div>
+        <p class="subtle">
+          Phát triển: giao diện cổng 5173, API cổng 3001.<br />Bản build:
+          Express phục vụ giao diện và API cùng nguồn.
+        </p>
+        <span class="number">04</span>
+      </section>
+      <section class="slide">
+        <h2>Dữ liệu và ràng buộc</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Quan hệ</th>
+              <th>Ý nghĩa</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>courses / teachers → classes</td>
+              <td>Lớp thuộc khóa học và có giáo viên phụ trách</td>
+            </tr>
+            <tr>
+              <td>users → enrollments ← classes</td>
+              <td>Đăng ký, trạng thái và điểm gắn với từng lớp</td>
+            </tr>
+            <tr>
+              <td>classes → materials</td>
+              <td>Tài liệu cấp quyền theo lớp đã xác nhận</td>
+            </tr>
+            <tr>
+              <td>placement_attempts / results</td>
+              <td>Lưu đề của lượt làm và lịch sử chấm điểm</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="subtle">
+          Khóa ngoại, unique index và trigger bảo vệ quan hệ và chống đăng ký
+          trùng.
+        </p>
+        <span class="number">05</span>
+      </section>
+      <section class="slide">
+        <h2>Quy trình đăng ký và tiếp nhận</h2>
+        <ol>
+          <li>Người học chọn lớp còn tuyển sinh và gửi thông tin.</li>
+          <li>Server kiểm tra dữ liệu, sĩ số và đăng ký trùng.</li>
+          <li>Admin xác minh, tạo hoặc liên kết tài khoản khách.</li>
+          <li>Admin duyệt lớp, server kiểm tra lại điều kiện nhận học.</li>
+          <li>Học viên xem lịch, điểm và tải tài liệu.</li>
+        </ol>
+        <span class="number">06</span>
+      </section>
+      <section class="slide">
+        <h2>Bài kiểm tra trình độ</h2>
+        <ul>
+          <li>Bắt đầu lượt làm với bộ câu hỏi cố định trong 30 phút.</li>
+          <li>Server chấm theo đáp án lưu lúc bắt đầu.</li>
+          <li>Nộp lại cùng lượt trả cùng kết quả.</li>
+          <li>Xem lại câu trả lời và khóa học được gợi ý.</li>
+        </ul>
+        <p class="subtle">
+          15 câu mẫu về ngữ pháp và từ vựng. Mức A1–B2 chỉ tham khảo,<br />không
+          phải chứng nhận CEFR hoặc kết quả IELTS.
+        </p>
+        <span class="number">07</span>
+      </section>
+      <section class="slide">
+        <h2>Nghiệp vụ quản trị đã bổ sung</h2>
+        <div class="split">
+          <div>
+            <h3>Lớp và học viên</h3>
+            <p>
+              Thứ, giờ, cơ sở, phòng học.<br />Chặn trùng giáo viên/phòng.<br />Đổi
+              mật khẩu thu hồi phiên cũ.
+            </p>
+          </div>
+          <div>
+            <h3>Vận hành trung tâm</h3>
+            <p>
+              PDF/DOCX tối đa 5 MB.<br />Tư vấn có trạng thái và ghi chú.<br />Báo
+              cáo tháng, sĩ số, Excel.
+            </p>
+          </div>
+        </div>
+        <p class="subtle">
+          Tệp và dữ liệu riêng tư chỉ trả về khi kiểm tra quyền thành công.
+        </p>
+        <span class="number">08</span>
+      </section>
+      <section class="slide">
+        <h2>Kiểm thử theo tình huống thực tế</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Tình huống</th>
+              <th>Kết quả yêu cầu</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Đổi email rồi đăng ký lại cùng lớp</td>
+              <td>Từ chối đăng ký trùng tài khoản</td>
+            </tr>
+            <tr>
+              <td>Duyệt đăng ký khi lớp đã kết thúc</td>
+              <td>Từ chối xác nhận mới</td>
+            </tr>
+            <tr>
+              <td>Sửa câu hỏi khi học viên đang làm</td>
+              <td>Giữ cách chấm của lượt ban đầu</td>
+            </tr>
+            <tr>
+              <td>Học viên tải tài liệu lớp khác</td>
+              <td>Từ chối truy cập</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="subtle">
+          API test, Playwright, kiểm tra responsive và Axe.<br />Kết quả chi
+          tiết: docs/VERIFICATION.md.
+        </p>
+        <span class="number">09</span>
+      </section>
+      <section class="slide cover">
+        <p class="eyebrow">TRÌNH DIỄN & THẢO LUẬN</p>
+        <h2>Luồng cốt lõi đã có dữ liệu thật</h2>
+        <p>
+          Đăng ký lớp, Admin tiếp nhận và duyệt,<br />học viên tải tài liệu,
+          xuất báo cáo Excel.
+        </p>
+        <p class="subtle">
+          Hướng phát triển: email khôi phục tài khoản, lịch nghỉ/học bù,<br />điểm
+          danh và triển khai HTTPS trên máy chủ.<br />Chưa tích hợp thanh toán,
+          chat hoặc tài khoản giáo viên.
+        </p>
+        <span class="number">10</span>
+      </section>
+    </main>
+    <nav class="controls" aria-label="Điều khiển slide">
+      <button id="prev">← Trước</button
+      ><span id="count" aria-live="polite"></span
+      ><button id="next">Sau →</button><button id="print">In / PDF</button>
+    </nav>
+    <script>
+      const slides = [...document.querySelectorAll(".slide")];
+      let current = 0;
+      function show(index) {
+        current = Math.max(0, Math.min(slides.length - 1, index));
+        slides.forEach((slide, i) =>
+          slide.classList.toggle("active", i === current),
+        );
+        document.getElementById("count").textContent =
+          `${current + 1} / ${slides.length}`;
+        document.getElementById("prev").disabled = current === 0;
+        document.getElementById("next").disabled =
+          current === slides.length - 1;
+      }
+      document.getElementById("prev").onclick = () => show(current - 1);
+      document.getElementById("next").onclick = () => show(current + 1);
+      document.getElementById("print").onclick = () => window.print();
+      document.addEventListener("keydown", (event) => {
+        if (["ArrowRight", "PageDown"].includes(event.key)) show(current + 1);
+        if (["ArrowLeft", "PageUp"].includes(event.key)) show(current - 1);
+      });
+      show(0);
+    </script>
+  </body>
+</html>

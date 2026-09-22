@@ -36,12 +36,12 @@ Tài khoản mẫu chỉ được tạo khi database chưa có người dùng, t
 ## Chức năng
 
 - **Khách:** trang chủ, giới thiệu, tìm/lọc 6 khóa học, chi tiết học phí, hồ sơ giáo viên, lịch khai giảng, tin tức, liên hệ, đăng ký lớp.
-- **Kiểm tra trình độ:** 15 câu mẫu; chuyển qua lại giữa các câu; chấm tại server, hiển thị điểm và gợi ý khóa học. Admin có thể quản lý ngân hàng câu hỏi.
-- **Học viên:** tự tạo tài khoản, đăng nhập/đăng xuất, xem đăng ký và trạng thái, lịch lớp, điểm kỹ năng, tải tài liệu `.txt`, sửa hồ sơ, xem lịch sử kiểm tra.
-- **Admin:** dashboard; thêm/sửa/xóa khóa học, giáo viên, học viên, lớp/lịch học, câu hỏi, tin tức; duyệt/hủy/xóa đăng ký, gắn tài khoản học viên, nhập điểm; xem lời nhắn liên hệ.
-- **Nghiệp vụ:** chống đăng ký trùng email/lớp; kiểm tra sĩ số lúc đăng ký và duyệt; chỉ học viên được xác nhận mới nhận tài liệu; chặn xóa dữ liệu còn liên kết; phân quyền API.
+- **Kiểm tra trình độ:** 15 câu mẫu; mỗi lượt giữ cố định bộ câu hỏi trong 30 phút, chấm tại server, xem lại câu trả lời và gợi ý khóa học. Nộp lại cùng lượt không tạo kết quả trùng.
+- **Học viên:** tự tạo tài khoản, đăng nhập/đăng xuất, đổi mật khẩu và thu hồi mọi phiên cũ, xem lịch tuần, điểm, tải tài liệu PDF/DOCX và ghi chú `.txt`, sửa hồ sơ, xem lại bài kiểm tra.
+- **Admin:** CRUD nội dung; duyệt/hủy đăng ký, tiếp nhận và xác minh tài khoản; nhập điểm; quản lý thứ/giờ/phòng/trạng thái lớp; tải tài liệu tối đa 5 MB; xử lý tư vấn theo trạng thái; báo cáo đăng ký theo tháng, sĩ số và xuất Excel 3 sheet.
+- **Nghiệp vụ:** chống trùng theo email hoặc tài khoản trong cùng lớp; kiểm tra sức chứa và trạng thái tuyển sinh lúc đăng ký/duyệt; chống trùng lịch giáo viên và phòng cùng cơ sở; tải tài liệu theo quyền lớp; chặn xóa dữ liệu còn liên kết; phân quyền API.
 
-Đăng ký khi chưa đăng nhập vẫn được lưu. Admin vào **Đăng ký & điểm → Sửa → Liên kết tài khoản học viên** để gắn với đúng tài khoản sau khi xác minh. Đăng ký khi đã đăng nhập tự gắn vào tài khoản hiện tại.
+Đăng ký khi chưa đăng nhập vẫn được lưu. Admin vào **Đăng ký & điểm → Tiếp nhận**, chọn tạo tài khoản mới hoặc liên kết tài khoản đã có, xác nhận đã liên hệ xác minh rồi lưu. Sau đó dùng **Sửa → Đã xác nhận** để duyệt lớp. Đăng ký khi đã đăng nhập tự gắn vào tài khoản hiện tại. Không tự gắn đăng ký khách chỉ dựa trên email.
 
 ## Kịch bản trình diễn
 
@@ -60,7 +60,11 @@ src/
   lib.jsx                  API client và thành phần dùng chung
   pages/Home.jsx           Trang chủ
   pages/PublicPages.jsx    Khóa học, giáo viên, tin tức, liên hệ
-  pages/AccountPages.jsx   Đăng ký, bài test, tài khoản, cổng học viên
+  pages/Enrollment.jsx     Đăng ký khóa học
+  pages/Placement.jsx      Bài test và xem lại đáp án
+  pages/Login.jsx          Đăng nhập/đăng ký tài khoản
+  pages/Student.jsx        Cổng học viên
+  pages/ManagementPanels.jsx Tài liệu, tiếp nhận, mật khẩu, báo cáo
   pages/Admin.jsx          Dashboard và CRUD
   styles.css               Responsive và hệ thống giao diện
 server/
@@ -68,6 +72,10 @@ server/
   db.js                    Schema SQLite, seed, băm mật khẩu
   schemas.js               Kiểm tra dữ liệu với Zod
   seed.js                  Nội dung minh họa và câu hỏi
+  migrations.js            Nâng cấp database hiện có
+  domain.js                Ràng buộc đăng ký và lịch học
+  placement.js             Lượt kiểm tra và chấm điểm
+  management.js            Tiếp nhận, tệp và báo cáo Excel
 public/                    Ảnh, font cục bộ và biểu tượng
 data/center.sqlite         Database tự tạo, không đưa vào Git
 tests/                     Kiểm thử API và trình duyệt
@@ -80,15 +88,19 @@ docs/                      Đặc tả và sơ đồ dữ liệu
 
 Database mặc định: `data/center.sqlite`. Có thể đổi bằng biến môi trường `DB_PATH`. Khởi động lại server không xóa dữ liệu. Nội dung seed chỉ được tạo một lần; chỉnh nội dung hiện có từ Admin.
 
-Để sao lưu: dừng server, sao chép cả thư mục `data/` sang vị trí an toàn. Không xóa database nếu muốn giữ đăng ký và tài khoản. Kiểm thử dùng database tách biệt và không sửa database demo.
+Chạy `npm.cmd run backup` để tạo bản sao SQLite nhất quán trong `data/backups/`, kể cả khi server đang chạy. Bản sao bao gồm tệp PDF/DOCX lưu dưới dạng BLOB. Quy trình khôi phục nằm trong [hướng dẫn vận hành](docs/OPERATIONS.md). Kiểm thử dùng database tách biệt.
+
+Database cũ được nâng cấp tự động, giữ dữ liệu và phân tích lịch chữ thành thứ/giờ khi nhận diện được. Admin cần bổ sung phòng học và rà lại lịch cũ không nhận diện được. Các lớp cũ không tự đổi ngày khai giảng.
 
 ## Kiểm tra
 
 ```powershell
+npm.cmd run lint
 npm.cmd test
 npm.cmd run build
 npx.cmd playwright install chromium
 npm.cmd run test:e2e
+npm.cmd audit --audit-level=moderate
 ```
 
 Kiểm thử trình duyệt tự mở một server riêng ở cổng 3002, dùng database tạm. Build lại trước khi chạy E2E nếu đã sửa mã nguồn. Ảnh kiểm tra giao diện được xuất trong `test-results/`.
@@ -102,3 +114,13 @@ Kiểm thử trình duyệt tự mở một server riêng ở cổng 3002, dùng
 - Bản này phục vụ chạy local. Trước khi dùng thật cần cấu hình triển khai HTTPS, tài khoản quản trị riêng, quy trình khôi phục tài khoản và chính sách bảo vệ dữ liệu. `NODE_ENV=production` bật cookie Secure và ngừng tạo tài khoản mẫu; không tự biến dữ liệu demo hiện có thành dữ liệu thật.
 
 Tài liệu nền tảng: [React](https://react.dev/learn), [Vite](https://vite.dev/guide/), [Node.js SQLite](https://nodejs.org/api/sqlite.html).
+
+## Tài liệu đồ án
+
+- [Báo cáo, use case và kịch bản bảo vệ](docs/REPORT.md)
+- [Slide thuyết trình HTML](docs/defense.html) và [bản PDF 10 trang](docs/defense.pdf): HTML mở bằng trình duyệt, phím trái/phải chuyển trang, Ctrl+P xuất PDF.
+- [Database và quan hệ](docs/DATABASE.md)
+- [Hướng dẫn vận hành và triển khai](docs/OPERATIONS.md)
+- [Kết quả kiểm thử](docs/VERIFICATION.md)
+
+CI nằm trong `.github/workflows/ci.yml`, chạy lint, test, build, E2E và audit khi repository được đưa lên GitHub. Chưa phát hành website hoặc chạy CI trên GitHub trong lần nâng cấp này.
