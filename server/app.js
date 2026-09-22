@@ -7,6 +7,15 @@ import { existsSync } from "node:fs";
 import { ZodError } from "zod";
 import { openDatabase, safeUser, hashPassword, verifyPassword } from "./db.js";
 import * as validation from "./schemas.js";
+import {
+  assertEnrolling,
+  assertSchedule,
+  assertUniqueEnrollment,
+  classStatus,
+  formatSchedule,
+} from "./domain.js";
+import { mountPlacement } from "./placement.js";
+import { mountManagement } from "./management.js";
 
 const fail = (status, message) => Object.assign(new Error(message), { status });
 const digest = (token) => createHash("sha256").update(token).digest("hex");
@@ -15,7 +24,9 @@ const parseRow = (row) =>
   Object.fromEntries(
     Object.entries(row).map(([key, value]) => [
       key,
-      ["options", "grades"].includes(key) ? JSON.parse(value) : value,
+      ["options", "grades", "weekdays", "review"].includes(key)
+        ? JSON.parse(value)
+        : value,
     ]),
   );
 export function createApp({
@@ -40,6 +51,7 @@ export function createApp({
         process.env.NODE_ENV === "production" ? undefined : false,
     }),
   );
+  app.use("/api/admin/materials", express.json({ limit: "8mb" }));
   app.use(express.json({ limit: "100kb" }));
   app.use("/api", (req, res, next) => {
     res.set("Cache-Control", "no-store");
@@ -142,7 +154,8 @@ export function createApp({
       .prepare(
         "SELECT classes.*, (SELECT count(*) FROM enrollments e WHERE e.classId=classes.id AND e.status='confirmed') AS enrolled FROM classes ORDER BY startDate",
       )
-      .all();
+      .all()
+      .map((row) => ({ ...parseRow(row), effectiveStatus: classStatus(row) }));
   app.get("/api/health", (_req, res) => res.json({ ok: true }));
   app.get("/api/catalog", (_req, res) =>
     res.json({
@@ -183,12 +196,30 @@ export function createApp({
     res.clearCookie("vec_session", { path: "/" });
     res.json({ ok: true });
   });
+  app.post("/api/auth/password", requireUser, authLimit, (req, res) => {
+    const { currentPassword, newPassword } = validation.changePassword.parse(
+      req.body,
+    );
+    if (!verifyPassword(currentPassword, req.user.passwordHash))
+      throw fail(400, "Mật khẩu hiện tại chưa đúng.");
+    if (currentPassword === newPassword)
+      throw fail(400, "Hãy chọn mật khẩu mới khác mật khẩu hiện tại.");
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      write("users", { passwordHash: hashPassword(newPassword) }, req.user.id);
+      db.prepare("DELETE FROM sessions WHERE userId=?").run(req.user.id);
+      db.exec("COMMIT");
+    } catch (e) {
+      db.exec("ROLLBACK");
+      throw e;
+    }
+    res.clearCookie("vec_session", { path: "/" });
+    res.json({ ok: true });
+  });
   app.post("/api/enrollments", submitLimit, (req, res) => {
     const data = validation.enrollment.parse(req.body);
     const cls = one("classes", data.classId);
-    if (!cls) throw fail(404, "Lớp học không tồn tại.");
-    if (cls.endDate < new Date().toISOString().slice(0, 10))
-      throw fail(409, "Lớp học đã kết thúc.");
+    assertEnrolling(cls);
     const count = db
       .prepare(
         "SELECT count(*) AS n FROM enrollments WHERE classId=? AND status='confirmed'",
@@ -197,6 +228,7 @@ export function createApp({
     if (count >= cls.capacity)
       throw fail(409, "Lớp đã đủ sĩ số. Vui lòng chọn lớp khác.");
     if (req.user) data.email = req.user.email;
+    assertUniqueEnrollment(db, { ...data, userId: req.user?.id ?? null });
     const id = write("enrollments", { ...data, userId: req.user?.id ?? null });
     res.status(201).json({
       id,
@@ -210,51 +242,7 @@ export function createApp({
         .map(({ answer, ...q }) => q),
     ),
   );
-  app.post("/api/placement", submitLimit, (req, res) => {
-    const questions = all("questions");
-    const answers = req.body?.answers;
-    if (
-      !questions.length ||
-      !answers ||
-      typeof answers !== "object" ||
-      Array.isArray(answers) ||
-      Object.keys(answers).length !== questions.length ||
-      questions.some(
-        (q) =>
-          !Number.isInteger(answers[q.id]) ||
-          answers[q.id] < 0 ||
-          answers[q.id] > 3,
-      )
-    )
-      throw fail(
-        400,
-        "Vui lòng trả lời đầy đủ tất cả câu hỏi. Nếu đề đã thay đổi, hãy tải lại bài kiểm tra.",
-      );
-    const score = questions.filter((q) => answers[q.id] === q.answer).length;
-    const ratio = score / questions.length;
-    const level =
-      ratio < 0.4 ? "A1" : ratio < 0.7 ? "A2" : ratio < 0.9 ? "B1" : "B2";
-    const desired =
-      ratio < 0.4 ? "Căn bản" : ratio < 0.7 ? "Giao tiếp" : "IELTS";
-    const course =
-      db
-        .prepare("SELECT id FROM courses WHERE category=? ORDER BY id LIMIT 1")
-        .get(desired) ||
-      db.prepare("SELECT id FROM courses ORDER BY id LIMIT 1").get();
-    const id = write("placement_results", {
-      userId: req.user?.id ?? null,
-      score,
-      total: questions.length,
-      level,
-    });
-    res.json({
-      id,
-      score,
-      total: questions.length,
-      level,
-      courseId: course?.id ?? null,
-    });
-  });
+  mountPlacement(app, { db, submitLimit, all, write });
   app.post("/api/contact", submitLimit, (req, res) => {
     const id = write("contacts", validation.contact.parse(req.body));
     res.status(201).json({ id });
@@ -275,11 +263,17 @@ export function createApp({
       materials: all("courses")
         .filter((c) => courseIds.has(c.id))
         .map(({ id, name, material }) => ({ id, name, material })),
+      files: db
+        .prepare(
+          "SELECT m.id,m.classId,m.title,m.lesson,m.filename,m.size,m.createdAt FROM materials m WHERE EXISTS(SELECT 1 FROM enrollments e WHERE e.userId=? AND e.classId=m.classId AND e.status='confirmed') ORDER BY m.id DESC",
+        )
+        .all(req.user.id),
       results: db
         .prepare(
           "SELECT * FROM placement_results WHERE userId=? ORDER BY id DESC",
         )
-        .all(req.user.id),
+        .all(req.user.id)
+        .map(parseRow),
     });
   });
   app.patch("/api/student", requireUser, (req, res) => {
@@ -288,6 +282,7 @@ export function createApp({
     res.json({ user: safeUser(one("users", req.user.id)) });
   });
   app.use("/api/admin", requireUser, requireAdmin);
+  mountManagement(app, { db, requireUser, one, write });
   app.get("/api/admin/overview", (_req, res) =>
     res.json({
       students: db
@@ -328,12 +323,40 @@ export function createApp({
         .get(id ?? 0).n;
       if (data.capacity < count)
         throw fail(409, "Sĩ số mới nhỏ hơn số học viên đã xác nhận.");
+      const previous = id ? one("classes", id) : null;
+      const scheduleChanged =
+        !previous ||
+        [
+          "teacherId",
+          "startDate",
+          "endDate",
+          "campus",
+          "room",
+          "startTime",
+          "endTime",
+          "weekdays",
+          "status",
+        ].some(
+          (key) => JSON.stringify(previous[key]) !== JSON.stringify(data[key]),
+        );
+      if (scheduleChanged && !["completed", "cancelled"].includes(data.status))
+        assertSchedule(db, data, id);
+      if (data.weekdays.length && data.startTime && data.endTime)
+        data.schedule = formatSchedule(data);
     }
     if (resource === "enrollments") {
+      const existing = one("enrollments", id);
+      assertUniqueEnrollment(db, { ...existing, ...data }, id);
       if (data.userId != null && one("users", data.userId)?.role !== "student")
         throw fail(400, "Hãy chọn tài khoản học viên hợp lệ.");
-      if (data.status === "confirmed") {
+      if (data.userId !== existing.userId)
+        throw fail(
+          409,
+          "Hãy dùng Tiếp nhận học viên để xác minh và liên kết tài khoản.",
+        );
+      if (data.status === "confirmed" && existing.status !== "confirmed") {
         const cls = one("classes", one("enrollments", id).classId);
+        assertEnrolling(cls);
         const count = db
           .prepare(
             "SELECT count(*) AS n FROM enrollments WHERE classId=? AND status='confirmed' AND id!=?",
@@ -345,7 +368,7 @@ export function createApp({
     }
   }
   app.post("/api/admin/:resource", (req, res) => {
-    if (req.params.resource === "enrollments")
+    if (["enrollments", "contacts"].includes(req.params.resource))
       throw fail(400, "Tạo đăng ký từ trang đăng ký lớp.");
     let data = validation.schemas[req.params.resource].parse(req.body);
     if (req.table === "users") {

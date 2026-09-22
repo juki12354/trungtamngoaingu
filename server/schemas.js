@@ -57,6 +57,13 @@ export const contact = z.object({
   phone,
   message: long.max(3000),
 });
+export const changePassword = z.object({
+  currentPassword: z.string().min(1).max(128),
+  newPassword: z
+    .string()
+    .min(10, "Mật khẩu mới cần ít nhất 10 ký tự.")
+    .max(128),
+});
 export const schemas = {
   courses: z.object({
     name: text,
@@ -84,7 +91,22 @@ export const schemas = {
     name: text,
     startDate: date,
     endDate: date,
-    schedule: text,
+    schedule: z.string().max(500).default(""),
+    weekdays: z
+      .array(z.number().int().min(1).max(7))
+      .max(7)
+      .refine((days) => new Set(days).size === days.length, "Thứ học bị trùng.")
+      .default([]),
+    startTime: z
+      .union([z.literal(""), z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/)])
+      .default(""),
+    endTime: z
+      .union([z.literal(""), z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/)])
+      .default(""),
+    room: z.string().trim().max(80).default(""),
+    status: z
+      .enum(["enrolling", "ongoing", "completed", "cancelled"])
+      .default("enrolling"),
     campus: text,
     capacity: z.number().int().min(1).max(100),
   }),
@@ -102,6 +124,10 @@ export const schemas = {
     answer: z.number().int().min(0).max(3),
   }),
   students: register,
+  contacts: z.object({
+    status: z.enum(["new", "contacted", "done"]),
+    note: z.string().trim().max(3000).default(""),
+  }),
   enrollments: z.object({
     status: z.enum(["pending", "confirmed", "cancelled"]),
     userId: id.nullable().optional(),

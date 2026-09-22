@@ -11,7 +11,6 @@ import {
   MapPin,
   Phone,
   Mail,
-  CalendarDays,
   ShieldCheck,
   Heart,
   Compass,
@@ -215,7 +214,7 @@ export function ClassTable({ classes }) {
               t = catalog.teachers.find((v) => v.id === cls.teacherId),
               closed =
                 cls.enrolled >= cls.capacity ||
-                cls.endDate < new Date().toISOString().slice(0, 10);
+                cls.effectiveStatus !== "enrolling";
             return (
               <tr key={cls.id}>
                 <td>
@@ -226,7 +225,10 @@ export function ClassTable({ classes }) {
                 </td>
                 <td>
                   {cls.schedule}
-                  <small>{cls.campus}</small>
+                  <small>
+                    {cls.campus}
+                    {cls.room ? ` · Phòng ${cls.room}` : ""}
+                  </small>
                 </td>
                 <td>{date(cls.startDate)}</td>
                 <td>

@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import {
+  MaterialsPanel,
+  ReportsPanel,
+  PasswordForm,
+  IntakeDialog,
+  classStatuses,
+  contactStatuses,
+} from "./ManagementPanels";
+import {
   LayoutDashboard,
   BookOpen,
   Users,
@@ -39,6 +47,10 @@ const resources = [
   ["enrollments", "Đăng ký & điểm", ClipboardList],
   ["questions", "Bài kiểm tra", FileQuestion],
   ["news", "Tin tức", Newspaper],
+  ["contacts", "Tư vấn", Mail],
+  ["materials", "Tài liệu lớp", BookOpen],
+  ["reports", "Báo cáo & Excel", ClipboardList],
+  ["password", "Đổi mật khẩu", Users],
 ];
 const fields = {
   courses: [
@@ -74,7 +86,10 @@ const fields = {
     ["teacherId", "Giáo viên", "teachers"],
     ["startDate", "Ngày khai giảng", "date"],
     ["endDate", "Ngày kết thúc", "date"],
-    ["schedule", "Lịch học (thứ, giờ)"],
+    ["startTime", "Giờ bắt đầu", "time"],
+    ["endTime", "Giờ kết thúc", "time"],
+    ["room", "Phòng học"],
+    ["status", "Trạng thái lớp", "classStatus"],
     ["campus", "Cơ sở"],
     ["capacity", "Sĩ số tối đa", "number"],
   ],
@@ -96,11 +111,14 @@ const fields = {
   ],
   enrollments: [
     ["status", "Trạng thái", "status"],
-    ["userId", "Liên kết tài khoản học viên", "students"],
     ["listening", "Listening (0–10)", "grade"],
     ["reading", "Reading (0–10)", "grade"],
     ["writing", "Writing (0–10)", "grade"],
     ["speaking", "Speaking (0–10)", "grade"],
+  ],
+  contacts: [
+    ["status", "Trạng thái tư vấn", "contactStatus"],
+    ["note", "Ghi chú tư vấn", "textarea"],
   ],
 };
 const defaults = {
@@ -117,7 +135,11 @@ const defaults = {
   classes: {
     capacity: 18,
     campus: "Cơ sở Lê Lợi",
-    schedule: "Thứ 2, Thứ 4 · 18:30 – 20:30",
+    weekdays: [1, 3],
+    startTime: "18:30",
+    endTime: "20:30",
+    room: "",
+    status: "enrolling",
   },
   news: {
     date: new Date().toISOString().slice(0, 10),
@@ -188,6 +210,12 @@ function AdminContent() {
         )}
         {resource === "overview" ? (
           <Overview onNavigate={setResource} key={version} />
+        ) : resource === "materials" ? (
+          <MaterialsPanel />
+        ) : resource === "reports" ? (
+          <ReportsPanel />
+        ) : resource === "password" ? (
+          <PasswordForm />
         ) : (
           <ResourceTable
             key={resource}
@@ -316,15 +344,19 @@ function ResourceTable({ resource, title, onSaved }) {
     [editing, setEditing] = useState(null),
     [actionError, setActionError] = useState(""),
     [deleting, setDeleting] = useState(null);
-  const filtered = (data || []).filter((row) =>
-    Object.values(row).some(
-      (v) =>
-        typeof v !== "object" &&
-        String(v)
-          .toLocaleLowerCase("vi")
-          .includes(query.toLocaleLowerCase("vi")),
-    ),
-  );
+  const [intake, setIntake] = useState(null),
+    [statusFilter, setStatusFilter] = useState("");
+  const filtered = (data || [])
+    .filter((row) => !statusFilter || row.status === statusFilter)
+    .filter((row) =>
+      Object.values(row).some(
+        (v) =>
+          typeof v !== "object" &&
+          String(v)
+            .toLocaleLowerCase("vi")
+            .includes(query.toLocaleLowerCase("vi")),
+      ),
+    );
   const totalPages = Math.max(1, Math.ceil(filtered.length / 8));
   const current = Math.min(page, totalPages);
   async function removed(row) {
@@ -348,6 +380,17 @@ function ResourceTable({ resource, title, onSaved }) {
     }
   }
   function description(row) {
+    if (resource === "contacts")
+      return (
+        <>
+          {row.email}
+          <small>{row.phone}</small>
+          <p>{row.message}</p>
+          <small>
+            {contactStatuses[row.status]} · {row.note}
+          </small>
+        </>
+      );
     if (resource === "courses")
       return (
         <>
@@ -378,7 +421,8 @@ function ResourceTable({ resource, title, onSaved }) {
         <>
           {catalog.courses.find((c) => c.id === row.courseId)?.name}
           <small>
-            {row.schedule} · {row.campus}
+            {row.schedule} · {row.campus} · {row.room || "Chưa xếp phòng"} ·{" "}
+            {classStatuses[row.effectiveStatus]}
           </small>
         </>
       );
@@ -423,7 +467,25 @@ function ResourceTable({ resource, title, onSaved }) {
             placeholder={`Tìm ${title.toLowerCase()}…`}
           />
         </label>
-        {resource !== "enrollments" && (
+        {resource === "contacts" && (
+          <Field label="Lọc trạng thái tư vấn">
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">Tất cả</option>
+              {Object.entries(contactStatuses).map(([id, name]) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
+        {!["enrollments", "contacts"].includes(resource) && (
           <button
             className="button small"
             onClick={() => setEditing({ ...defaults[resource] })}
@@ -485,6 +547,16 @@ function ResourceTable({ resource, title, onSaved }) {
                     )}
                     <td>
                       <div className="row-actions">
+                        {resource === "enrollments" &&
+                          !row.userId &&
+                          row.status !== "cancelled" && (
+                            <button
+                              className="text-button"
+                              onClick={() => setIntake(row)}
+                            >
+                              Tiếp nhận
+                            </button>
+                          )}
                         <button
                           aria-label={`Sửa bản ghi ${row.id}`}
                           title="Sửa"
@@ -542,30 +614,37 @@ function ResourceTable({ resource, title, onSaved }) {
           }}
         />
       )}
+      {intake && (
+        <IntakeDialog
+          item={intake}
+          onClose={() => setIntake(null)}
+          onSaved={() => {
+            setIntake(null);
+            reload();
+            onSaved("Đã xác minh và liên kết học viên.");
+          }}
+        />
+      )}
     </div>
   );
 }
 function EditDialog({ resource, item, onClose, onSaved }) {
   const dialog = useRef(null);
   const { catalog } = useApp();
-  const [students, setStudents] = useState([]);
-  const [studentId, setStudentId] = useState(
-    item.userId == null ? "" : String(item.userId),
-  );
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   useEffect(() => {
     dialog.current.showModal();
-    if (resource === "enrollments")
-      api("/admin/students")
-        .then(setStudents)
-        .catch((e) => setError(e.message));
   }, [resource]);
   async function submit(e) {
     e.preventDefault();
     setBusy(true);
     setError("");
     const data = Object.fromEntries(new FormData(e.currentTarget));
+    if (resource === "classes")
+      data.weekdays = new FormData(e.currentTarget)
+        .getAll("weekdays")
+        .map(Number);
     for (const [key, , type] of fields[resource]) {
       if (["number", "courses", "teachers", "answer"].includes(type))
         data[key] = Number(data[key]);
@@ -579,7 +658,6 @@ function EditDialog({ resource, item, onClose, onSaved }) {
       );
     }
     if (resource === "enrollments") {
-      data.userId = studentId ? Number(studentId) : null;
       data.grades = {};
       for (const key of ["listening", "reading", "writing", "speaking"]) {
         if (data[key] !== "") data.grades[key] = Number(data[key]);
@@ -626,9 +704,27 @@ function EditDialog({ resource, item, onClose, onSaved }) {
           <p className="form-hint">
             {item.name} · {item.email}
             <br />
-            Gắn đúng tài khoản để học viên xem lịch, điểm và tài liệu. Điểm kỹ
-            năng theo thang 10.
+            {item.userId
+              ? "Đã liên kết tài khoản học viên."
+              : "Dùng Tiếp nhận để xác minh và liên kết tài khoản."}{" "}
+            Điểm kỹ năng theo thang 10.
           </p>
+        )}
+        {resource === "classes" && (
+          <fieldset className="weekday-picker">
+            <legend>Ngày học trong tuần *</legend>
+            {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+              <label key={day}>
+                <input
+                  type="checkbox"
+                  name="weekdays"
+                  value={day}
+                  defaultChecked={item.weekdays?.includes(day)}
+                />
+                {day === 7 ? "Chủ nhật" : `Thứ ${day + 1}`}
+              </label>
+            ))}
+          </fieldset>
         )}
         <div className="form-grid">
           {fields[resource].map(([key, label, type = "text"]) => {
@@ -638,7 +734,7 @@ function EditDialog({ resource, item, onClose, onSaved }) {
                 ? item.grades?.[key]
                 : item[key];
             const required =
-              !["material", "birthday"].includes(key) &&
+              !["material", "birthday", "note"].includes(key) &&
               type !== "grade" &&
               type !== "students" &&
               !(key === "password" && item.id);
@@ -647,31 +743,34 @@ function EditDialog({ resource, item, onClose, onSaved }) {
                 ? catalog.courses
                 : type === "teachers"
                   ? catalog.teachers
-                  : type === "students"
-                    ? students
-                    : type === "status"
-                      ? Object.entries(statusText).map(([id, name]) => ({
+                  : type === "classStatus"
+                    ? Object.entries(classStatuses).map(([id, name]) => ({
+                        id,
+                        name,
+                      }))
+                    : type === "contactStatus"
+                      ? Object.entries(contactStatuses).map(([id, name]) => ({
                           id,
                           name,
                         }))
-                      : type === "answer"
-                        ? ["A", "B", "C", "D"].map((name, id) => ({ id, name }))
-                        : null;
+                      : type === "status"
+                        ? Object.entries(statusText).map(([id, name]) => ({
+                            id,
+                            name,
+                          }))
+                        : type === "answer"
+                          ? ["A", "B", "C", "D"].map((name, id) => ({
+                              id,
+                              name,
+                            }))
+                          : null;
             return (
               <div className={type === "textarea" ? "span-two" : ""} key={key}>
                 <Field label={label + (required ? " *" : "")}>
                   {options ? (
                     <select
                       name={key}
-                      defaultValue={
-                        type === "students" ? undefined : (value ?? "")
-                      }
-                      value={type === "students" ? studentId : undefined}
-                      onChange={
-                        type === "students"
-                          ? (e) => setStudentId(e.target.value)
-                          : undefined
-                      }
+                      defaultValue={value ?? ""}
                       required={required}
                     >
                       {!["status", "answer"].includes(type) && (

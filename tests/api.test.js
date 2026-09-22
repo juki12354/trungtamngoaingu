@@ -2,6 +2,11 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { createApp } from "../server/app.js";
 let server, base, admin, student;
+const futureDate = (days) => {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+};
 async function request(path, method = "GET", body, cookie) {
   const res = await fetch(base + path, {
     method,
@@ -97,7 +102,11 @@ test("placement hides answers and requires a complete valid submission", async (
     400,
   );
   const answers = Object.fromEntries(questions.map((q) => [q.id, 0]));
-  const r = await request("/placement", "POST", { answers });
+  const attempt = (await request("/placement/attempts", "POST", {})).body;
+  const r = await request("/placement", "POST", {
+    answers,
+    token: attempt.token,
+  });
   assert.equal(r.status, 200);
   assert.equal(r.body.total, 15);
   assert.ok(r.body.score >= 0 && r.body.score <= 15);
@@ -211,9 +220,14 @@ test("approval respects class capacity and reducing capacity cannot orphan confi
       courseId: 1,
       teacherId: 1,
       name: "CAP-TEST",
-      startDate: "2026-10-10",
-      endDate: "2027-01-20",
+      startDate: futureDate(14),
+      endDate: futureDate(110),
       schedule: "Thứ 2",
+      weekdays: [7],
+      startTime: "07:00",
+      endTime: "08:00",
+      room: "TEST-CAP",
+      status: "enrolling",
       campus: "Lê Lợi",
       capacity: 1,
     },
@@ -263,7 +277,14 @@ test("a fully correct placement submission returns the expected score without tr
   const questions = (await request("/admin/questions", "GET", null, admin))
     .body;
   const answers = Object.fromEntries(questions.map((q) => [q.id, q.answer]));
-  const r = await request("/placement", "POST", { answers, score: 0 }, student);
+  const attempt = (await request("/placement/attempts", "POST", {}, student))
+    .body;
+  const r = await request(
+    "/placement",
+    "POST",
+    { answers, score: 0, token: attempt.token },
+    student,
+  );
   assert.equal(r.body.score, 15);
   assert.equal(r.body.level, "B2");
   assert.equal(r.body.courseId, 1);

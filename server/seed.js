@@ -122,15 +122,26 @@ export const teachers = [
       "Cô Linh mang những câu chuyện, trò chơi và dự án sáng tạo vào lớp học, giúp các bạn nhỏ học tiếng Anh với sự tò mò và niềm vui.",
   },
 ];
+const futureDate = (days) => {
+  const value = new Date();
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+};
 export const classes = courses.map((c, i) => ({
   id: i + 1,
   courseId: c.id,
   teacherId: i === 0 || i === 4 ? 1 : i === 1 || i === 5 ? 2 : 3,
   name: ["IELTS-F01", "GT-02", "KIDS-03", "TEEN-04", "CB-05", "WORK-06"][i],
-  startDate: `2026-10-${String(5 + i * 3).padStart(2, "0")}`,
-  endDate: "2027-01-30",
+  startDate: futureDate(14 + i * 3),
+  endDate: futureDate(110 + i * 3),
   schedule:
-    i % 2 ? "Thứ 3, Thứ 5 · 19:00 – 21:00" : "Thứ 2, Thứ 4 · 18:30 – 20:30",
+    i === 4
+      ? "Thứ 2, Thứ 4 · 20:30 – 21:30"
+      : i === 5
+        ? "Thứ 7, Chủ nhật · 08:00 – 10:00"
+        : i % 2
+          ? "Thứ 3, Thứ 5 · 19:00 – 21:00"
+          : "Thứ 2, Thứ 4 · 18:30 – 20:30",
   campus: i % 2 ? "Cơ sở Nguyễn Văn Cừ" : "Cơ sở Lê Lợi",
   capacity: 18,
 }));

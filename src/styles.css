@@ -1994,6 +1994,7 @@ td .text-link {
   background: #f5f7f2;
 }
 .admin-sidebar {
+  min-width: 0;
   background: #fff;
   border-right: 1px solid var(--line);
   padding: 35px 20px;
@@ -3755,4 +3756,76 @@ td .text-link {
     animation: none !important;
     transition: none !important;
   }
+}
+
+.weekday-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 0 0 24px;
+  padding: 16px;
+  border: 1px solid #d5dfda;
+  border-radius: 12px;
+}
+.weekday-picker label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.weekday-picker input {
+  width: auto;
+}
+.quiz-review {
+  text-align: left;
+  margin: 24px 0;
+}
+.quiz-review summary,
+.weekly-schedule summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.quiz-review li {
+  margin: 20px 0;
+}
+.quiz-review p {
+  margin: 8px 0;
+}
+.weekly-schedule {
+  margin-bottom: 28px;
+  padding: 20px;
+  background: #f1f6f3;
+  border-radius: 14px;
+}
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+.week-grid h3 {
+  font-size: 16px;
+}
+.week-grid p {
+  font-size: 13px;
+  border-top: 1px solid #d5dfda;
+  padding-top: 12px;
+}
+.report-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: end;
+  margin: 24px 0;
+}
+.report-filters .field {
+  margin: 0;
+}
+.admin-panel hr {
+  border: 0;
+  border-top: 1px solid #d5dfda;
+  margin: 28px 0;
+}
+.row-actions .text-button {
+  width: auto;
+  padding: 7px;
+  white-space: nowrap;
 }

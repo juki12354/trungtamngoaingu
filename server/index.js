@@ -3,8 +3,9 @@ const port = Number(process.env.PORT || 3001);
 const app = createApp({
   ...(process.env.DB_PATH ? { dbPath: process.env.DB_PATH } : {}),
 });
-const server = app.listen(port, "127.0.0.1", () =>
-  console.log(`Vinh English API: http://127.0.0.1:${port}`),
+const host = process.env.HOST || "127.0.0.1";
+const server = app.listen(port, host, () =>
+  console.log(`Vinh English API: http://${host}:${port}`),
 );
 function stop() {
   server.close(() => {

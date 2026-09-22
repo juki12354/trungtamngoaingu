@@ -3,6 +3,7 @@ import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import * as seed from "./seed.js";
+import { migrate } from "./migrations.js";
 
 export function hashPassword(password) {
   const salt = randomBytes(16).toString("hex");
@@ -101,5 +102,6 @@ export function openDatabase(path, demo) {
       JSON.stringify({ listening: 7, reading: 8, writing: 6.5, speaking: 7 }),
     );
   }
+  migrate(db);
   return db;
 }
