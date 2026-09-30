@@ -49,6 +49,7 @@ test("teacher profiles display achievements and admin edits appear publicly", as
   await page.getByRole("button", { name: "Giáo viên", exact: true }).click();
   await page.getByLabel("Tìm giáo viên").fill("Lê Hoàng Nam");
   await page.getByRole("button", { name: /^Sửa bản ghi/ }).click();
+  await page.getByLabel("Quốc tịch", { exact: true }).fill("Việt Nam");
   await page
     .getByLabel("Thành tích nổi bật")
     .fill(
@@ -57,6 +58,9 @@ test("teacher profiles display achievements and admin edits appear publicly", as
   await page.getByRole("button", { name: "Lưu thông tin" }).click();
   await expect(page.getByRole("dialog")).not.toBeVisible();
   await page.goto("/giao-vien/4");
+  await expect(
+    page.getByText("Quốc tịch: Việt Nam", { exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByText("Thành tích cập nhật bằng giao diện", { exact: true }),
   ).toBeVisible();

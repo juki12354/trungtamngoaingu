@@ -19,6 +19,7 @@
     "backup": "node --env-file-if-exists=.env scripts/backup.mjs",
     "seed:classes": "node --env-file-if-exists=.env scripts/add-class-options.mjs",
     "seed:teachers": "node --env-file-if-exists=.env scripts/add-teacher-profiles.mjs",
+    "seed:public": "node --env-file-if-exists=.env scripts/add-public-content.mjs",
     "setup:admin": "node --env-file-if-exists=.env scripts/setup-admin.mjs",
     "test": "node --test tests/*.test.js",
     "test:e2e": "playwright test"

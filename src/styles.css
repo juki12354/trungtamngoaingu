@@ -1,4 +1,135 @@
 @import url("/fonts/fonts.css");
+.discovery-split {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 3rem;
+  align-items: start;
+}
+.discovery-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.discovery-filters .field {
+  margin: 0;
+  min-width: 0;
+}
+.discovery-results,
+.discovery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+.discovery-results {
+  justify-content: space-between;
+}
+.discovery-actions {
+  margin-top: 1.5rem;
+}
+.available-filter {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+.available-filter input {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--green);
+}
+.campus-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2rem;
+}
+.campus-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.campus-card > img {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+}
+.campus-card > div {
+  padding: 1.5rem;
+}
+.campus-card p svg {
+  vertical-align: middle;
+}
+.roadmap-detail {
+  background: var(--cream);
+  padding: 2rem;
+  border-radius: var(--radius);
+  margin-top: 1.5rem;
+}
+.roadmap-stages {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2rem;
+}
+.roadmap-stages li {
+  border-top: 2px solid var(--green);
+  padding-top: 1rem;
+}
+.roadmap-stages li > span {
+  color: var(--green);
+  font-weight: 700;
+}
+.discovery-links {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+.discovery-links > a {
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.discovery-links > a:hover {
+  background: var(--cream);
+}
+.discovery-links h3 {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.consultation-steps {
+  padding-left: 1.25rem;
+  line-height: 2;
+}
+.home-consultation {
+  max-width: 860px;
+}
+.consultation-form {
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .discovery-split,
+  .campus-grid {
+    grid-template-columns: 1fr;
+  }
+  .discovery-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .discovery-filters,
+  .roadmap-stages,
+  .discovery-links {
+    grid-template-columns: 1fr;
+  }
+  .roadmap-detail {
+    padding: 1.25rem;
+  }
+  .discovery-actions .button {
+    width: 100%;
+  }
+}
 :root {
   font-family: "Be Vietnam Pro", sans-serif;
   color: #253c32;

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
@@ -22,12 +21,10 @@ import {
   CourseCard,
   Empty,
   Field,
-  ErrorMessage,
-  Success,
-  api,
   money,
   date,
 } from "../lib";
+import { ConsultationForm } from "./DiscoveryPages";
 export function Courses() {
   const { catalog } = useApp();
   const [params, setParams] = useSearchParams();
@@ -202,7 +199,8 @@ export function ClassTable({ classes }) {
             <th>Lớp học</th>
             <th>Lịch học</th>
             <th>Khai giảng</th>
-            <th>Sĩ số</th>
+            <th>Học phí / khóa</th>
+            <th>Chỗ còn lại</th>
             <th>
               <span className="sr-only">Đăng ký</span>
             </th>
@@ -231,9 +229,10 @@ export function ClassTable({ classes }) {
                   </small>
                 </td>
                 <td>{date(cls.startDate)}</td>
+                <td>{money(c?.tuition || 0)}</td>
                 <td>
                   <span className="badge">
-                    {cls.enrolled}/{cls.capacity}
+                    {Math.max(0, cls.capacity - cls.enrolled)} chỗ
                   </span>
                 </td>
                 <td>
@@ -256,7 +255,42 @@ export function ClassTable({ classes }) {
 }
 export function Schedule() {
   const { catalog } = useApp();
-  const [course, setCourse] = useState("");
+  const [params, setParams] = useSearchParams();
+  const get = (key) => params.get(key) || "";
+  const set = (key, value) => {
+    const next = new URLSearchParams(params);
+    value ? next.set(key, value) : next.delete(key);
+    setParams(next, { replace: true });
+  };
+  const classes = catalog.classes
+    .filter((c) => {
+      const tuition = catalog.courses.find(
+        (course) => course.id === c.courseId,
+      )?.tuition;
+      const hour = c.startTime ? Number(c.startTime.split(":")[0]) : null;
+      const shift =
+        hour === null
+          ? ""
+          : hour < 12
+            ? "morning"
+            : hour < 18
+              ? "afternoon"
+              : "evening";
+      return (
+        (!get("course") || c.courseId === Number(get("course"))) &&
+        (!get("campus") || c.campus === get("campus")) &&
+        (!get("from") || c.startDate >= get("from")) &&
+        (!get("shift") || shift === get("shift")) &&
+        (!get("budget") || tuition <= Number(get("budget"))) &&
+        (!get("available") ||
+          (c.effectiveStatus === "enrolling" && c.enrolled < c.capacity))
+      );
+    })
+    .sort(
+      (a, b) =>
+        a.startDate.localeCompare(b.startDate) ||
+        a.startTime.localeCompare(b.startTime),
+    );
   return (
     <>
       <PageHeading
@@ -267,22 +301,75 @@ export function Schedule() {
         học đầu tiên.
       </PageHeading>
       <section className="section container">
-        <label className="field filter-field">
-          <span>Lọc theo khóa học</span>
-          <select value={course} onChange={(e) => setCourse(e.target.value)}>
-            <option value="">Tất cả khóa học</option>
-            {catalog.courses.map((c) => (
-              <option value={c.id} key={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <ClassTable
-          classes={catalog.classes.filter(
-            (c) => !course || c.courseId === Number(course),
-          )}
-        />
+        <div className="discovery-filters">
+          <Field label="Lọc theo khóa học">
+            <select
+              value={get("course")}
+              onChange={(e) => set("course", e.target.value)}
+            >
+              <option value="">Tất cả khóa học</option>
+              {catalog.courses.map((c) => (
+                <option value={c.id} key={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Lọc theo cơ sở">
+            <select
+              value={get("campus")}
+              onChange={(e) => set("campus", e.target.value)}
+            >
+              <option value="">Tất cả cơ sở</option>
+              {[...new Set(catalog.classes.map((c) => c.campus))].map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </Field>
+          <Field
+            label="Khai giảng từ ngày"
+            type="date"
+            value={get("from")}
+            onChange={(e) => set("from", e.target.value)}
+          />
+          <Field label="Ca học">
+            <select
+              value={get("shift")}
+              onChange={(e) => set("shift", e.target.value)}
+            >
+              <option value="">Tất cả ca học</option>
+              <option value="morning">Buổi sáng · trước 12:00</option>
+              <option value="afternoon">Buổi chiều · 12:00–17:59</option>
+              <option value="evening">Buổi tối · từ 18:00</option>
+            </select>
+          </Field>
+          <Field label="Học phí tối đa">
+            <select
+              value={get("budget")}
+              onChange={(e) => set("budget", e.target.value)}
+            >
+              <option value="">Không giới hạn</option>
+              <option value="2500000">2.500.000 đ</option>
+              <option value="3000000">3.000.000 đ</option>
+              <option value="4000000">4.000.000 đ</option>
+            </select>
+          </Field>
+          <label className="available-filter">
+            <input
+              type="checkbox"
+              checked={Boolean(get("available"))}
+              onChange={(e) => set("available", e.target.checked ? "1" : "")}
+            />{" "}
+            Chỉ lớp còn nhận đăng ký
+          </label>
+        </div>
+        <div className="discovery-results">
+          <p role="status">Tìm thấy {classes.length} lớp học</p>
+          <button className="text-button" onClick={() => setParams({})}>
+            Xóa bộ lọc
+          </button>
+        </div>
+        <ClassTable classes={classes} />
         <p className="muted small-text">
           Lịch và cơ sở là dữ liệu minh họa. Số chỗ được cập nhật theo đăng ký
           đã xác nhận.
@@ -322,6 +409,7 @@ export function Teachers() {
               </h2>
               <p>{t.degree}</p>
               <span className="badge">{t.experience} năm kinh nghiệm</span>
+              <p>Quốc tịch: {t.nationality || "Đang cập nhật"}</p>
               <p>{t.description}</p>
               {t.achievements && (
                 <div className="teacher-highlight">
@@ -361,6 +449,7 @@ export function TeacherDetail() {
             Hồ sơ, bằng cấp và thành tích minh họa cho đồ án.
           </p>
           <span className="badge">{t.experience} năm kinh nghiệm</span>
+          <p>Quốc tịch: {t.nationality || "Đang cập nhật"}</p>
           <h2>{t.degree}</h2>
           <p>{t.description}</p>
           <section
@@ -477,6 +566,21 @@ export function About() {
 }
 export function News() {
   const { catalog } = useApp();
+  const [params, setParams] = useSearchParams();
+  const query = params.get("q") || "",
+    category = params.get("category") || "";
+  const set = (key, value) => {
+    const next = new URLSearchParams(params);
+    value ? next.set(key, value) : next.delete(key);
+    setParams(next, { replace: true });
+  };
+  const articles = catalog.news.filter(
+    (n) =>
+      (!category || n.category === category) &&
+      `${n.title} ${n.excerpt}`
+        .toLocaleLowerCase("vi")
+        .includes(query.toLocaleLowerCase("vi")),
+  );
   return (
     <>
       <PageHeading
@@ -486,27 +590,52 @@ export function News() {
         Kinh nghiệm, câu chuyện và những gợi ý nhỏ để bạn học tiếng Anh mỗi
         ngày.
       </PageHeading>
-      <section className="section container news-grid">
-        {catalog.news.map((n) => (
-          <article className="news-card" key={n.id}>
-            <Link to={`/tin-tuc/${n.id}`}>
-              <img src={n.image} alt={n.title} />
-            </Link>
-            <div>
-              <span className="eyebrow">
-                {n.category} · {date(n.date)}
-              </span>
-              <h2>
-                <Link to={`/tin-tuc/${n.id}`}>{n.title}</Link>
-              </h2>
-              <p>{n.excerpt}</p>
-              <Link className="text-link" to={`/tin-tuc/${n.id}`}>
-                Đọc bài viết
-                <ArrowUpRight size={17} />
+      <section className="section container">
+        <div className="discovery-filters">
+          <Field
+            label="Tìm bài viết"
+            type="search"
+            value={query}
+            onChange={(e) => set("q", e.target.value)}
+          />
+          <Field label="Chủ đề">
+            <select
+              value={category}
+              onChange={(e) => set("category", e.target.value)}
+            >
+              <option value="">Tất cả chủ đề</option>
+              {[...new Set(catalog.news.map((n) => n.category))].map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </Field>
+        </div>
+        <p role="status">{articles.length} bài viết</p>
+        <div className="news-grid">
+          {articles.map((n) => (
+            <article className="news-card" key={n.id}>
+              <Link to={`/tin-tuc/${n.id}`}>
+                <img src={n.image} alt={n.title} />
               </Link>
-            </div>
-          </article>
-        ))}
+              <div>
+                <span className="eyebrow">
+                  {n.category} · {date(n.date)}
+                </span>
+                <h2>
+                  <Link to={`/tin-tuc/${n.id}`}>{n.title}</Link>
+                </h2>
+                <p>{n.excerpt}</p>
+                <Link className="text-link" to={`/tin-tuc/${n.id}`}>
+                  Đọc bài viết
+                  <ArrowUpRight size={17} />
+                </Link>
+              </div>
+            </article>
+          ))}
+        </div>
+        {!articles.length && (
+          <Empty>Chưa có bài viết phù hợp. Hãy thử từ khóa khác.</Empty>
+        )}
       </section>
     </>
   );
@@ -540,25 +669,6 @@ export function NewsDetail() {
   );
 }
 export function Contact() {
-  const [busy, setBusy] = useState(false),
-    [error, setError] = useState(""),
-    [done, setDone] = useState(false);
-  async function submit(e) {
-    e.preventDefault();
-    setBusy(true);
-    setError("");
-    try {
-      await api("/contact", {
-        method: "POST",
-        body: Object.fromEntries(new FormData(e.currentTarget)),
-      });
-      setDone(true);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusy(false);
-    }
-  }
   return (
     <>
       <PageHeading eyebrow="LIÊN HỆ" title="Chúng tôi luôn sẵn sàng lắng nghe.">
@@ -606,34 +716,7 @@ export function Contact() {
           </p>
         </div>
         <div className="form-panel">
-          {done ? (
-            <Success title="Đã nhận lời nhắn của bạn!">
-              Thông tin đã được lưu để quản trị viên tiếp nhận.
-            </Success>
-          ) : (
-            <form onSubmit={submit}>
-              <h2>Chia sẻ với chúng tôi</h2>
-              <Field label="Họ và tên" name="name" required maxLength={100} />
-              <div className="form-grid">
-                <Field label="Email" name="email" type="email" required />
-                <Field
-                  label="Số điện thoại"
-                  name="phone"
-                  type="tel"
-                  pattern="(0|\+84)[0-9]{9,10}"
-                  required
-                />
-              </div>
-              <Field label="Bạn cần tư vấn điều gì?">
-                <textarea name="message" rows={5} required maxLength={3000} />
-              </Field>
-              <ErrorMessage>{error}</ErrorMessage>
-              <button className="button" disabled={busy}>
-                {busy ? "Đang gửi…" : "Gửi lời nhắn"}
-                <ArrowUpRight size={18} />
-              </button>
-            </form>
-          )}
+          <ConsultationForm />
         </div>
       </section>
     </>

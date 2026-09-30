@@ -15,7 +15,11 @@ Mở **http://127.0.0.1:5173**. API chạy ở cổng **3001**. Dừng bằng `C
 
 Có thể nhấp đúp **CHAY-WEBSITE.cmd** để cài thư viện nếu cần rồi chạy website.
 
-Để có nhiều ca học cho từng khóa trong database mới, chạy `npm.cmd run seed:classes`. Lệnh thêm 18 lớp, tổng cộng 24 lớp mẫu; chạy lại không tạo trùng. Xem [chi tiết các ca học](docs/CLASS-SCHEDULES.md).
+Để có nhiều ca học cho từng khóa trong database mới, chạy `npm.cmd run seed:classes`. Lệnh thêm 18 lớp, tổng cộng 26 lớp mẫu (gồm 2 lớp TOEIC); chạy lại không tạo trùng. Xem [chi tiết các ca học](docs/CLASS-SCHEDULES.md).
+
+Bản cập nhật trải nghiệm công khai có 7 khóa học, bài test 25 câu, lộ trình tại `/lo-trinh`, tìm cơ sở tại `/co-so`, học thử tại `/hoc-thu` và tư vấn tại `/tu-van`. Với database cũ, chạy `npm.cmd run backup`, `npm.cmd run seed:teachers`, rồi `npm.cmd run seed:public`. Lệnh bổ sung TOEIC và 10 câu hỏi, giữ dữ liệu đã chỉnh sửa; chạy lại không tạo trùng. Quốc tịch giáo viên có thể sửa trong Admin.
+
+Lịch khai giảng hỗ trợ lọc đồng thời khóa học, cơ sở, ngày bắt đầu, ca sáng/chiều/tối, học phí tối đa và chỗ trống. Bộ lọc lưu trên URL. Học thử/tư vấn lưu loại yêu cầu, độ tuổi, khóa quan tâm, cơ sở và mục tiêu; Admin xử lý trong mục **Tư vấn**. Gửi form chưa xác nhận lịch hẹn. Xem [phạm vi cập nhật](docs/PUBLIC-EXPERIENCE.md).
 
 Database mới có 9 giáo viên mẫu kèm bằng cấp, kinh nghiệm và thành tích. Với database cũ, chạy `npm.cmd run seed:teachers` để bổ sung hồ sơ; lệnh giữ nội dung thành tích đã chỉnh sửa và không đổi giáo viên của các lớp. Admin → Giáo viên → Sửa có trường **Thành tích nổi bật**, mỗi dòng hiển thị thành một mục trong hồ sơ công khai. Các thành tích là dữ liệu minh họa của đồ án.
 
@@ -39,8 +43,8 @@ Tài khoản mẫu chỉ được tạo khi database chưa có người dùng, t
 
 ## Chức năng
 
-- **Khách:** trang chủ, giới thiệu, tìm/lọc 6 khóa học, chi tiết học phí, hồ sơ giáo viên, lịch khai giảng, tin tức, liên hệ, đăng ký lớp.
-- **Kiểm tra trình độ:** 15 câu mẫu; mỗi lượt giữ cố định bộ câu hỏi trong 30 phút, chấm tại server, xem lại câu trả lời và gợi ý khóa học. Nộp lại cùng lượt không tạo kết quả trùng.
+- **Khách:** trang chủ, giới thiệu, tìm/lọc 7 khóa học, lộ trình theo mục tiêu, tìm cơ sở, chi tiết học phí, hồ sơ giáo viên, lịch khai giảng, tìm/lọc bài viết, tư vấn, học thử và đăng ký lớp.
+- **Kiểm tra trình độ:** 25 câu mẫu; mỗi lượt giữ cố định bộ câu hỏi trong 30 phút, chấm tại server, xem lại câu trả lời và gợi ý khóa học. Nộp lại cùng lượt không tạo kết quả trùng.
 - **Học viên:** tự tạo tài khoản, đăng nhập/đăng xuất, đổi mật khẩu và thu hồi mọi phiên cũ, xem lịch tuần, điểm, tải tài liệu PDF/DOCX và ghi chú `.txt`, sửa hồ sơ, xem lại bài kiểm tra.
 - **Admin:** CRUD nội dung; duyệt/hủy đăng ký, tiếp nhận và xác minh tài khoản; nhập điểm; quản lý thứ/giờ/phòng/trạng thái lớp; tải tài liệu tối đa 5 MB; xử lý tư vấn theo trạng thái; báo cáo đăng ký theo tháng, sĩ số và xuất Excel 3 sheet.
 - **Nghiệp vụ:** chống trùng theo email hoặc tài khoản trong cùng lớp; kiểm tra sức chứa và trạng thái tuyển sinh lúc đăng ký/duyệt; chống trùng lịch giáo viên và phòng cùng cơ sở; tải tài liệu theo quyền lớp; chặn xóa dữ liệu còn liên kết; phân quyền API.

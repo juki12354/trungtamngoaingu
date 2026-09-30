@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { AppContext, api, Loading, ErrorMessage } from "./lib";
 import Home from "./pages/Home";
+import { Campuses, Roadmap, Consultation } from "./pages/DiscoveryPages";
 import {
   About,
   Courses,
@@ -66,7 +67,7 @@ function Layout({ user, logout, children }) {
               <Phone size={12} />
               0238 3 888 899
             </a>
-            <Link to="/lien-he">
+            <Link to="/co-so">
               <MapPin size={12} />
               Hệ thống cơ sở
             </Link>
@@ -127,7 +128,7 @@ function Layout({ user, logout, children }) {
                 Đăng nhập
               </Link>
             )}
-            <Link className="button small" to="/dang-ky">
+            <Link className="button small" to="/tu-van">
               Đăng ký tư vấn
               <ArrowUpRight size={16} />
             </Link>
@@ -165,6 +166,9 @@ function Layout({ user, logout, children }) {
           </div>
           <div>
             <h3>Đồng hành cùng bạn</h3>
+            <Link to="/lo-trinh">Lộ trình học</Link>
+            <Link to="/co-so">Tìm cơ sở</Link>
+            <Link to="/hoc-thu">Đăng ký học thử</Link>
             <Link to="/kiem-tra">Kiểm tra trình độ</Link>
             <Link to="/lich-khai-giang">Lịch khai giảng</Link>
             <Link to="/hoc-vien">Cổng học viên</Link>
@@ -254,6 +258,10 @@ export default function App() {
             <Route path="/lich-khai-giang" element={<Schedule />} />
             <Route path="/tin-tuc" element={<News />} />
             <Route path="/tin-tuc/:id" element={<NewsDetail />} />
+            <Route path="/co-so" element={<Campuses />} />
+            <Route path="/lo-trinh" element={<Roadmap />} />
+            <Route path="/tu-van" element={<Consultation />} />
+            <Route path="/hoc-thu" element={<Consultation trial />} />
             <Route path="/lien-he" element={<Contact />} />
             <Route path="/dang-ky" element={<Enrollment />} />
             <Route path="/kiem-tra" element={<Placement />} />

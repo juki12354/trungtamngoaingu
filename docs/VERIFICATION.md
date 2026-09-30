@@ -1,4 +1,16 @@
-# Kết quả kiểm tra — 22/09/2026
+# Kết quả kiểm tra — 30/09/2026
+
+## Cập nhật trải nghiệm công khai
+
+- `npm run lint`, `npm run build`: đạt.
+- `npm test`: **41/41 đạt**. Kiểm tra thêm form học thử/tư vấn, lựa chọn sai, phân quyền, nâng cấp database cũ và chạy seed lặp không ghi đè nội dung đã sửa.
+- `npm run test:e2e`: **12/12 đạt** (46,2 giây). Luồng cơ sở → lọc lịch TOEIC → đăng ký lớp; form học thử → Admin đọc đủ nhu cầu; tư vấn; lộ trình → chi tiết khóa; tìm bài viết; bài test 25 câu; Admin sửa quốc tịch và thành tích.
+- Trang mới kiểm tra ở 320/768/1440px; trang cũ kiểm tra ở 320/768/1024/1440px, không tràn ngang toàn trang hoặc lỗi JavaScript. Axe tự động không ghi nhận vi phạm trong phạm vi kiểm tra. Đã mở ảnh chụp trang học thử và lộ trình để kiểm tra bố cục.
+- Database thực tế sau nâng cấp: **7 khóa, 9 giáo viên, 26 lớp, 25 câu hỏi, 2 cơ sở trong catalog**. So sánh với backup trước cập nhật: giữ nguyên 3 tài khoản, 2 đăng ký, 1 kết quả test và các giá trị trường cũ. `PRAGMA integrity_check` trả `ok`. Chạy lại `seed:public` trả 0 bản ghi được thêm/sửa.
+- API qua Vite tại `http://127.0.0.1:5173/api/catalog` trả dữ liệu mới. Mã nguồn cập nhật được kiểm tra local; chưa xuất bản bản cập nhật này lên GitHub.
+- Đã sửa cấu hình Playwright trên Windows để lưu trace/ảnh lỗi trong thư mục tạm ngoài OneDrive, sau khi tái hiện lỗi khóa trace `EBUSY` lúc đóng browser. Linux CI tiếp tục lưu artifact tại `test-results/`. Ảnh chụp bố cục chủ động vẫn nằm trong `test-results/` của dự án.
+
+## Lịch sử kiểm tra đến 22/09/2026
 
 Môi trường: Windows, Node.js 24.17.0. Kiểm thử trình duyệt bằng Chromium/Playwright.
 

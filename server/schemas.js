@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { campuses } from "./campuses.js";
 const text = z.string().trim().min(1, "Vui lòng điền đủ thông tin.").max(500);
 const long = z.string().trim().min(1).max(20000);
 export const email = z
@@ -56,6 +57,12 @@ export const contact = z.object({
   email,
   phone,
   message: long.max(3000),
+  kind: z.enum(["consultation", "trial"]).default("consultation"),
+  age: z.number().int().min(4).max(100).nullable().default(null),
+  courseId: id.nullable().default(null),
+  campus: z
+    .union([z.literal(""), z.enum(campuses.map((c) => c.name))])
+    .default(""),
 });
 export const changePassword = z.object({
   currentPassword: z.string().min(1).max(128),
@@ -79,6 +86,7 @@ export const schemas = {
   }),
   teachers: z.object({
     name: text,
+    nationality: z.string().trim().max(80).default(""),
     degree: text,
     experience: z.number().int().min(0).max(60),
     specialty: text,

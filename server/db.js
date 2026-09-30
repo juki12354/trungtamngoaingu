@@ -4,6 +4,7 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import * as seed from "./seed.js";
 import { migrate } from "./migrations.js";
+import { addPublicContent } from "./public-content.js";
 
 export function hashPassword(password) {
   const salt = randomBytes(16).toString("hex");
@@ -44,7 +45,8 @@ export function openDatabase(path, demo) {
     CREATE TABLE IF NOT EXISTS contacts (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, message TEXT NOT NULL, createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
     CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
   `);
-  if (!db.prepare("SELECT 1 FROM metadata WHERE key='seeded'").get()) {
+  const fresh = !db.prepare("SELECT 1 FROM metadata WHERE key='seeded'").get();
+  if (fresh) {
     db.exec("BEGIN");
     try {
       for (const table of [
@@ -103,5 +105,6 @@ export function openDatabase(path, demo) {
     );
   }
   migrate(db);
+  if (fresh) addPublicContent(db);
   return db;
 }

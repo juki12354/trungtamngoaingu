@@ -11,6 +11,7 @@ export function migrate(db) {
   db.exec("BEGIN IMMEDIATE");
   try {
     add("teachers", "achievements", "TEXT NOT NULL DEFAULT ''");
+    add("teachers", "nationality", "TEXT NOT NULL DEFAULT ''");
     add("classes", "weekdays", "TEXT NOT NULL DEFAULT '[]'");
     add("classes", "startTime", "TEXT NOT NULL DEFAULT ''");
     add("classes", "endTime", "TEXT NOT NULL DEFAULT ''");
@@ -20,6 +21,14 @@ export function migrate(db) {
     add("enrollments", "verifiedBy", "INTEGER REFERENCES users(id)");
     add("contacts", "status", "TEXT NOT NULL DEFAULT 'new'");
     add("contacts", "note", "TEXT NOT NULL DEFAULT ''");
+    add("contacts", "kind", "TEXT NOT NULL DEFAULT 'consultation'");
+    add("contacts", "age", "INTEGER");
+    add(
+      "contacts",
+      "courseId",
+      "INTEGER REFERENCES courses(id) ON DELETE SET NULL",
+    );
+    add("contacts", "campus", "TEXT NOT NULL DEFAULT ''");
     add("placement_results", "review", "TEXT NOT NULL DEFAULT '[]'");
     db.exec(`
       CREATE TABLE IF NOT EXISTS placement_attempts (token TEXT PRIMARY KEY, userId INTEGER REFERENCES users(id), questions TEXT NOT NULL, expires INTEGER NOT NULL, result TEXT);

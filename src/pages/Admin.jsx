@@ -67,6 +67,7 @@ const fields = {
   ],
   teachers: [
     ["name", "Họ và tên"],
+    ["nationality", "Quốc tịch"],
     ["degree", "Bằng cấp / Chứng chỉ"],
     ["experience", "Kinh nghiệm (năm)", "number"],
     ["specialty", "Chuyên môn"],
@@ -386,6 +387,17 @@ function ResourceTable({ resource, title, onSaved }) {
         <>
           {row.email}
           <small>{row.phone}</small>
+          <p>
+            <strong>
+              {row.kind === "trial" ? "Đăng ký học thử" : "Tư vấn"}
+            </strong>
+            {row.age ? ` · ${row.age} tuổi` : ""}
+          </p>
+          <small>
+            {catalog.courses.find((c) => c.id === row.courseId)?.name ||
+              "Chưa chọn khóa học"}{" "}
+            · {row.campus || "Chưa chọn cơ sở"}
+          </small>
           <p>{row.message}</p>
           <small>
             {contactStatuses[row.status]} · {row.note}
@@ -735,7 +747,13 @@ function EditDialog({ resource, item, onClose, onSaved }) {
                 ? item.grades?.[key]
                 : item[key];
             const required =
-              !["material", "birthday", "note", "achievements"].includes(key) &&
+              ![
+                "material",
+                "birthday",
+                "note",
+                "achievements",
+                "nationality",
+              ].includes(key) &&
               type !== "grade" &&
               type !== "students" &&
               !(key === "password" && item.id);

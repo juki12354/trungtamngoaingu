@@ -1,5 +1,7 @@
 # Cơ sở dữ liệu
 
+Cập nhật 30/09/2026: `teachers.nationality` bổ sung quốc tịch; `contacts` bổ sung `kind`, `age`, `courseId` (tham chiếu courses, ON DELETE SET NULL) và `campus`. Migration giữ dữ liệu cũ. Chi tiết API và cập nhật dữ liệu mẫu xem [PUBLIC-EXPERIENCE.md](PUBLIC-EXPERIENCE.md).
+
 SQLite lưu tại `data/center.sqlite`. Schema và ràng buộc chi tiết nằm trong `server/db.js` và `server/migrations.js`.
 
 ```mermaid

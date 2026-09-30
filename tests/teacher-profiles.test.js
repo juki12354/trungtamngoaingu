@@ -7,7 +7,7 @@ test("teacher profiles enrich legacy data without overwriting edits or class ass
   const db = openDatabase(":memory:", true);
   try {
     db.exec(
-      "DELETE FROM teachers WHERE id>3; UPDATE teachers SET achievements='' WHERE id<=3; UPDATE teachers SET achievements='Thành tích do Admin cập nhật',description='Giới thiệu đã sửa' WHERE id=1;",
+      "DELETE FROM classes WHERE teacherId>3; DELETE FROM teachers WHERE id>3; UPDATE teachers SET achievements='' WHERE id<=3; UPDATE teachers SET achievements='Thành tích do Admin cập nhật',description='Giới thiệu đã sửa' WHERE id=1;",
     );
     const classes = db.prepare("SELECT * FROM classes").all();
     assert.deepEqual(addTeacherProfiles(db), { added: 6, enriched: 2 });

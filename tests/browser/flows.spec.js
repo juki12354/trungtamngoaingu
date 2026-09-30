@@ -80,9 +80,9 @@ test("placement navigation, complete scoring, and course recommendation", async 
 }) => {
   await page.goto("/kiem-tra");
   await page.getByRole("button", { name: "Bắt đầu kiểm tra" }).click();
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 25; i++) {
     await page.getByRole("radio").nth(1).check();
-    if (i < 14)
+    if (i < 24)
       await page.getByRole("button", { name: "Câu tiếp theo" }).click();
   }
   await page.getByRole("button", { name: "Nộp bài & xem kết quả" }).click();
@@ -126,11 +126,14 @@ test("contact form is delivered to admin inbox", async ({ page }) => {
     .fill("contact-e2e@example.com");
   await page.getByLabel("Số điện thoại", { exact: true }).fill("0901234567");
   await page
-    .getByLabel("Bạn cần tư vấn điều gì?")
+    .getByLabel("Mục tiêu học tập")
     .fill("Cần tư vấn lớp IELTS buổi tối.");
-  await page.getByRole("button", { name: "Gửi lời nhắn" }).click();
+  await page.getByLabel("Độ tuổi").fill("20");
+  await page.getByLabel("Khóa học quan tâm").selectOption("1");
+  await page.getByLabel("Cơ sở muốn học").selectOption("Cơ sở Lê Lợi");
+  await page.getByRole("button", { name: "Gửi yêu cầu tư vấn" }).click();
   await expect(
-    page.getByRole("heading", { name: "Đã nhận lời nhắn của bạn!" }),
+    page.getByRole("heading", { name: "Đã nhận yêu cầu tư vấn!" }),
   ).toBeVisible();
   await login(page, adminEmail, "Admin@123456");
   await expect(page.getByText("Cần tư vấn lớp IELTS buổi tối.")).toBeVisible();

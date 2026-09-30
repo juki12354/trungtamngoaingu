@@ -13,6 +13,8 @@ import {
   Globe2,
 } from "lucide-react";
 import { useApp, CourseCard, SectionHeading } from "../lib";
+import { DiscoveryLinks, ConsultationForm } from "./DiscoveryPages";
+import { ClassTable } from "./PublicPages";
 export default function Home() {
   const { catalog } = useApp();
   const [category, setCategory] = useState("Tất cả");
@@ -47,8 +49,8 @@ export default function Home() {
               <br className="desktop-break" /> phiên bản tốt hơn của chính bạn.
             </p>
             <div className="hero-buttons">
-              <Link className="button" to="/khoa-hoc">
-                Khám phá khóa học
+              <Link className="button" to="/hoc-thu">
+                Đăng ký học thử
                 <ArrowUpRight size={19} />
               </Link>
               <Link className="button outline" to="/kiem-tra">
@@ -167,23 +169,18 @@ export default function Home() {
           to="/khoa-hoc"
         />
         <div className="filter-tabs" aria-label="Lọc chương trình">
-          {[
-            "Tất cả",
-            "IELTS",
-            "Giao tiếp",
-            "Trẻ em",
-            "Thiếu niên",
-            "Đi làm",
-          ].map((t) => (
-            <button
-              key={t}
-              className={category === t ? "active" : ""}
-              aria-pressed={category === t}
-              onClick={() => setCategory(t)}
-            >
-              {t}
-            </button>
-          ))}
+          {["Tất cả", ...new Set(catalog.courses.map((c) => c.category))].map(
+            (t) => (
+              <button
+                key={t}
+                className={category === t ? "active" : ""}
+                aria-pressed={category === t}
+                onClick={() => setCategory(t)}
+              >
+                {t}
+              </button>
+            ),
+          )}
         </div>
         <div className="course-grid">
           {courses.map((c) => (
@@ -191,6 +188,7 @@ export default function Home() {
           ))}
         </div>
       </section>
+      <DiscoveryLinks />
       <section className="why-section">
         <div className="container why-grid">
           <div className="why-photo">
@@ -351,6 +349,28 @@ export default function Home() {
               </div>
             </Link>
           ))}
+        </div>
+      </section>
+      <section className="section container">
+        <SectionHeading
+          eyebrow="LỊCH KHAI GIẢNG"
+          title="Các lớp đang nhận đăng ký"
+          link="Xem toàn bộ lịch"
+          to="/lich-khai-giang"
+        />
+        <ClassTable
+          classes={catalog.classes
+            .filter(
+              (c) =>
+                c.effectiveStatus === "enrolling" && c.enrolled < c.capacity,
+            )
+            .sort((a, b) => a.startDate.localeCompare(b.startDate))
+            .slice(0, 3)}
+        />
+      </section>
+      <section className="section container home-consultation">
+        <div className="form-panel">
+          <ConsultationForm />
         </div>
       </section>
       <section className="closing">

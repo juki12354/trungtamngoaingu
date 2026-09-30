@@ -15,6 +15,7 @@ import {
   formatSchedule,
 } from "./domain.js";
 import { mountPlacement } from "./placement.js";
+import { campuses } from "./campuses.js";
 import { mountManagement } from "./management.js";
 
 const fail = (status, message) => Object.assign(new Error(message), { status });
@@ -165,6 +166,7 @@ export function createApp({
       teachers: all("teachers").reverse(),
       classes: classList(),
       news: all("news").reverse(),
+      campuses,
     }),
   );
   app.get("/api/auth/me", (req, res) =>
@@ -244,7 +246,10 @@ export function createApp({
   );
   mountPlacement(app, { db, submitLimit, all, write });
   app.post("/api/contact", submitLimit, (req, res) => {
-    const id = write("contacts", validation.contact.parse(req.body));
+    const data = validation.contact.parse(req.body);
+    if (data.courseId && !one("courses", data.courseId))
+      throw fail(400, "Khóa học quan tâm không còn tồn tại.");
+    const id = write("contacts", data);
     res.status(201).json({ id });
   });
   app.get("/api/student", requireUser, (req, res) => {

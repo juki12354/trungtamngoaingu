@@ -41,10 +41,10 @@ before(async () => {
   ).cookie;
 });
 after(() => new Promise((resolve) => server.close(resolve)));
-test("catalog exposes six courses without private student data", async () => {
+test("catalog exposes seven courses without private student data", async () => {
   const r = await request("/catalog");
   assert.equal(r.status, 200);
-  assert.equal(r.body.courses.length, 6);
+  assert.equal(r.body.courses.length, 7);
   assert.equal(r.body.users, undefined);
 });
 test("admin routes reject guests and students", async () => {
@@ -143,7 +143,7 @@ test("registration persists, rejects invalid data and duplicates", async () => {
 });
 test("placement hides answers and requires a complete valid submission", async () => {
   const questions = (await request("/questions")).body;
-  assert.equal(questions.length, 15);
+  assert.equal(questions.length, 25);
   assert.equal(questions[0].answer, undefined);
   assert.equal(
     (await request("/placement", "POST", { answers: {} })).status,
@@ -156,8 +156,8 @@ test("placement hides answers and requires a complete valid submission", async (
     token: attempt.token,
   });
   assert.equal(r.status, 200);
-  assert.equal(r.body.total, 15);
-  assert.ok(r.body.score >= 0 && r.body.score <= 15);
+  assert.equal(r.body.total, 25);
+  assert.ok(r.body.score >= 0 && r.body.score <= 25);
   assert.ok(r.body.courseId);
 });
 test("course CRUD validates and preserves foreign key relationships", async () => {
@@ -333,12 +333,12 @@ test("a fully correct placement submission returns the expected score without tr
     { answers, score: 0, token: attempt.token },
     student,
   );
-  assert.equal(r.body.score, 15);
+  assert.equal(r.body.score, 25);
   assert.equal(r.body.level, "B2");
   assert.equal(r.body.courseId, 1);
   assert.equal(
     (await request("/student", "GET", null, student)).body.results[0].score,
-    15,
+    25,
   );
 });
 test("invalid dates, grades and relation targets are rejected", async () => {
