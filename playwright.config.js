@@ -5,6 +5,9 @@ import { join } from "node:path";
 const testDir = mkdtempSync(join(tmpdir(), "vinh-english-e2e-"));
 export default defineConfig({
   testDir: "./tests/browser",
+  // OneDrive may lock an actively written trace while syncing on Windows.
+  outputDir:
+    process.platform === "win32" ? join(testDir, "results") : "test-results",
   workers: 1,
   timeout: 45000,
   use: {
