@@ -2,9 +2,15 @@
 
 Đồ án chạy thực tế bằng **React + Vite**, giao diện tiếng Việt, có **Express API + SQLite**. Dữ liệu đăng ký, tài khoản, điểm và thay đổi của Admin được lưu trong database; không dùng localStorage để giả lập backend.
 
-## Đưa website lên mạng
+## Mở website dùng thử miễn phí
 
-Đã có cấu hình `render.yaml` để chạy đầy đủ React, API và database trên Render. Xem [hướng dẫn triển khai từng bước](docs/DEPLOY-RENDER.md). Phương án này dùng Web Service có phí và persistent disk để giữ dữ liệu; cần tạo tài khoản Render và xem chi phí trước khi triển khai. Chưa có link website công khai được xác nhận.
+**[Bấm vào đây để mở website](https://pole-suite-fraction-leasing.trycloudflare.com)** — link tạm tạo ngày 01/10/2026.
+
+Bản dùng thử có đăng nhập, đăng ký học và quản trị, chạy bằng database mẫu riêng. Link chỉ hoạt động khi máy của chủ dự án và chương trình chia sẻ còn chạy; tắt chương trình sẽ ngừng truy cập. Tài khoản Admin của bản chia sẻ được lưu riêng trên máy, không công khai trong repository. Người xem có thể tự tạo tài khoản học viên qua trang Đăng nhập.
+
+## Hosting lâu dài (tùy chọn, hiện chưa sử dụng)
+
+Đã có cấu hình `render.yaml` để chạy đầy đủ React, API và database trên Render. Xem [hướng dẫn triển khai từng bước](docs/DEPLOY-RENDER.md). Đây là phương án có phí nếu sau này cần chạy lâu dài; hiện chưa tạo dịch vụ Render. Link dùng thử phía trên dùng Cloudflare Quick Tunnel, không cần mua hosting hay tên miền.
 
 ## Chạy trên Windows
 
@@ -37,6 +43,8 @@ npm.cmd start
 Mở **http://127.0.0.1:3001**. Lệnh này vẫn chạy ở chế độ demo local nếu không đặt `NODE_ENV=production`.
 
 ## Tài khoản dùng thử
+
+Các tài khoản dưới đây chỉ dùng khi chạy chế độ demo trên máy. Link chia sẻ công khai sử dụng tài khoản Admin riêng.
 
 | Vai trò  | Email                  | Mật khẩu         |
 | -------- | ---------------------- | ---------------- |
