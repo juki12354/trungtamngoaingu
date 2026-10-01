@@ -2,6 +2,10 @@
 
 Đồ án chạy thực tế bằng **React + Vite**, giao diện tiếng Việt, có **Express API + SQLite**. Dữ liệu đăng ký, tài khoản, điểm và thay đổi của Admin được lưu trong database; không dùng localStorage để giả lập backend.
 
+## Đưa website lên mạng
+
+Đã có cấu hình `render.yaml` để chạy đầy đủ React, API và database trên Render. Xem [hướng dẫn triển khai từng bước](docs/DEPLOY-RENDER.md). Phương án này dùng Web Service có phí và persistent disk để giữ dữ liệu; cần tạo tài khoản Render và xem chi phí trước khi triển khai. Chưa có link website công khai được xác nhận.
+
 ## Chạy trên Windows
 
 Yêu cầu **Node.js 24 trở lên**. Mở PowerShell tại thư mục dự án:
