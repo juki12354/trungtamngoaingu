@@ -1,14 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "vite";
-import { createApp } from "../server/app.js";
+import { createApp } from "./helpers/app.js";
 import config from "../vite.config.js";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 test("development proxy preserves origin checks for browser login", async () => {
-  const app = createApp({ dbPath: ":memory:", demo: true });
+  const app = await createApp({ dbPath: ":memory:", demo: true });
   const backend = app.listen(0, "127.0.0.1");
   await new Promise((resolve) => backend.once("listening", resolve));
   const target = `http://127.0.0.1:${backend.address().port}`;
@@ -41,6 +41,6 @@ test("development proxy preserves origin checks for browser login", async () => 
   } finally {
     await vite.close();
     await new Promise((resolve) => backend.close(resolve));
-    app.locals.db.close();
+    await app.locals.db.close();
   }
 });

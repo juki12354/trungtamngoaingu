@@ -21,6 +21,12 @@ export default defineConfig({
     command: "node server/index.js",
     url: "http://127.0.0.1:3002/api/health",
     reuseExistingServer: false,
-    env: { PORT: "3002", DB_PATH: join(testDir, "e2e.sqlite") },
+    env: {
+      NODE_ENV: "test",
+      HOST: "127.0.0.1",
+      PORT: "3002",
+      DB_PATH: join(testDir, "e2e.sqlite"),
+      DATABASE_URL: process.env.E2E_DATABASE_URL || "",
+    },
   },
 });

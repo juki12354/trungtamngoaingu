@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createApp } from "../server/app.js";
+import { createApp } from "./helpers/app.js";
 
 const day = (offset) => {
   const date = new Date();
@@ -9,12 +9,12 @@ const day = (offset) => {
 };
 
 async function setup(t) {
-  const app = createApp({ dbPath: ":memory:", demo: true });
+  const app = await createApp({ dbPath: ":memory:", demo: true });
   const server = app.listen(0, "127.0.0.1");
   await new Promise((resolve) => server.once("listening", resolve));
   t.after(async () => {
     await new Promise((resolve) => server.close(resolve));
-    app.locals.db.close();
+    await app.locals.db.close();
   });
   const base = `http://127.0.0.1:${server.address().port}/api`;
   async function request(path, method = "GET", body, cookie) {

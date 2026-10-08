@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createApp } from "../server/app.js";
+import { createApp } from "./helpers/app.js";
 import { openDatabase } from "../server/db.js";
 import { addPublicContent } from "../server/public-content.js";
 
@@ -42,7 +42,7 @@ test("sample upgrade offers TOEIC and 25 questions without overwriting edits on 
 });
 
 test("trial requests persist structured preferences and reject invalid choices", async () => {
-  const app = createApp({ dbPath: ":memory:", demo: true });
+  const app = await createApp({ dbPath: ":memory:", demo: true });
   const server = app.listen(0, "127.0.0.1");
   await new Promise((resolve) => server.once("listening", resolve));
   const base = `http://127.0.0.1:${server.address().port}/api`;
@@ -89,7 +89,7 @@ test("trial requests persist structured preferences and reject invalid choices",
     assert.equal(catalog.campuses.length, 2);
   } finally {
     await new Promise((resolve) => server.close(resolve));
-    app.locals.db.close();
+    await app.locals.db.close();
   }
 });
 

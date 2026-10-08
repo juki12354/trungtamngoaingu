@@ -1,7 +1,7 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { createApp } from "../server/app.js";
-let server, base, admin, student;
+import { createApp } from "./helpers/app.js";
+let server, base, admin, student, app;
 const futureDate = (days) => {
   const d = new Date();
   d.setUTCDate(d.getUTCDate() + days);
@@ -23,7 +23,7 @@ async function request(path, method = "GET", body, cookie) {
   };
 }
 before(async () => {
-  const app = createApp({ dbPath: ":memory:", demo: true });
+  app = await createApp({ dbPath: ":memory:", demo: true });
   server = app.listen(0, "127.0.0.1");
   await new Promise((resolve) => server.once("listening", resolve));
   base = `http://127.0.0.1:${server.address().port}/api`;
@@ -40,7 +40,10 @@ before(async () => {
     })
   ).cookie;
 });
-after(() => new Promise((resolve) => server.close(resolve)));
+after(async () => {
+  await new Promise((resolve) => server.close(resolve));
+  await app.locals.db.close();
+});
 test("catalog exposes seven courses without private student data", async () => {
   const r = await request("/catalog");
   assert.equal(r.status, 200);

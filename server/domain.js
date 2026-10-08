@@ -30,6 +30,26 @@ export function formatSchedule(cls) {
   return `${days.join(", ")} · ${cls.startTime} – ${cls.endTime}`;
 }
 export function assertSchedule(db, cls, id) {
+  return checkSchedule(
+    cls,
+    db
+      .prepare(
+        "SELECT * FROM classes WHERE id != ? AND status NOT IN ('completed','cancelled') AND startDate <= ? AND endDate >= ?",
+      )
+      .all(Number(id || 0), cls.endDate, cls.startDate),
+  );
+}
+export async function assertScheduleAsync(db, cls, id) {
+  return checkSchedule(
+    cls,
+    await db
+      .prepare(
+        "SELECT * FROM classes WHERE id != ? AND status NOT IN ('completed','cancelled') AND startDate <= ? AND endDate >= ?",
+      )
+      .all(Number(id || 0), cls.endDate, cls.startDate),
+  );
+}
+function checkSchedule(cls, candidates) {
   if (
     !cls.weekdays.length ||
     !cls.startTime ||
@@ -40,11 +60,6 @@ export function assertSchedule(db, cls, id) {
   if (cls.startTime >= cls.endTime)
     throw fail(400, "Giờ kết thúc phải sau giờ bắt đầu.");
   if (["completed", "cancelled"].includes(cls.status)) return;
-  const candidates = db
-    .prepare(
-      "SELECT * FROM classes WHERE id != ? AND status NOT IN ('completed','cancelled') AND startDate <= ? AND endDate >= ?",
-    )
-    .all(Number(id || 0), cls.endDate, cls.startDate);
   for (const other of candidates) {
     if (!(
       cls.teacherId === other.teacherId ||
@@ -74,19 +89,13 @@ export function assertSchedule(db, cls, id) {
     }
   }
 }
-export function assertUniqueEnrollment(db, data, excludeId = 0) {
+export async function assertUniqueEnrollment(db, data, excludeId = 0) {
   if (data.status === "cancelled") return;
-  const row = db
+  const row = await db
     .prepare(
-      "SELECT id FROM enrollments WHERE classId=? AND status!='cancelled' AND id!=? AND (email=? OR (? IS NOT NULL AND userId=?))",
+      "SELECT id FROM enrollments WHERE classId=? AND status!='cancelled' AND id!=? AND (email=? OR userId=?)",
     )
-    .get(
-      data.classId,
-      Number(excludeId),
-      data.email,
-      data.userId ?? null,
-      data.userId ?? null,
-    );
+    .get(data.classId, Number(excludeId), data.email, data.userId ?? null);
   if (row)
     throw fail(409, "Học viên đã có đăng ký đang hoạt động trong lớp này.");
 }

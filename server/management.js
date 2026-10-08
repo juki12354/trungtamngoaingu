@@ -1,9 +1,9 @@
+import { mutation } from "./mutation.js";
 import { z } from "zod";
 import ExcelJS from "exceljs";
 import yauzl from "yauzl";
 import { fail, assertUniqueEnrollment, classStatus, today } from "./domain.js";
 import { hashPassword, safeUser } from "./db.js";
-
 const uploadSchema = z.object({
   classId: z.number().int().positive(),
   title: z.string().trim().min(1).max(200),
@@ -29,7 +29,10 @@ async function fileMime(filename, content) {
   await new Promise((resolve, reject) =>
     yauzl.fromBuffer(
       content,
-      { lazyEntries: true, validateEntrySizes: true },
+      {
+        lazyEntries: true,
+        validateEntrySizes: true,
+      },
       (error, zip) => {
         if (error) return reject(fail(400, "Tệp DOCX không hợp lệ."));
         const names = new Set();
@@ -65,38 +68,46 @@ async function fileMime(filename, content) {
   return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 }
 export function mountManagement(app, { db, requireUser, one, write }) {
-  const audit = (req, action, resource, id) =>
-    db
+  const localDate = (column) =>
+    db.dialect === "postgres"
+      ? `CAST(CAST(${column} AS timestamp) + INTERVAL '7 hours' AS date)`
+      : `date(${column},'+7 hours')`;
+  const localMonth =
+    db.dialect === "postgres"
+      ? "to_char(CAST(createdAt AS timestamp) + INTERVAL '7 hours','YYYY-MM')"
+      : "strftime('%Y-%m',datetime(createdAt,'+7 hours'))";
+  const audit = async (req, action, resource, id) =>
+    await db
       .prepare(
         "INSERT INTO audit_logs(actorId,action,resource,recordId) VALUES (?,?,?,?)",
       )
       .run(req.user.id, action, resource, id);
-  app.post("/api/admin/enrollments/:id/intake", (req, res) => {
-    const data = z
-      .object({
-        verified: z.literal(true, {
-          error: "Cần xác nhận đã xác minh thông tin học viên.",
-        }),
-        mode: z.enum(["create", "existing"]),
-        userId: z.number().int().positive().optional(),
-        password: z.string().min(10).max(128).optional(),
-      })
-      .parse(req.body);
-    const enrollment = one("enrollments", req.params.id);
-    if (!enrollment) throw fail(404, "Không tìm thấy đăng ký.");
-    if (enrollment.status === "cancelled") throw fail(409, "Đăng ký đã hủy.");
-    if (enrollment.userId) throw fail(409, "Đăng ký đã liên kết tài khoản.");
-    db.exec("BEGIN IMMEDIATE");
-    try {
+  app.post(
+    "/api/admin/enrollments/:id/intake",
+    mutation(db, async (req, _res) => {
+      const data = z
+        .object({
+          verified: z.literal(true, {
+            error: "Cần xác nhận đã xác minh thông tin học viên.",
+          }),
+          mode: z.enum(["create", "existing"]),
+          userId: z.number().int().positive().optional(),
+          password: z.string().min(10).max(128).optional(),
+        })
+        .parse(req.body);
+      const enrollment = await one("enrollments", req.params.id);
+      if (!enrollment) throw fail(404, "Không tìm thấy đăng ký.");
+      if (enrollment.status === "cancelled") throw fail(409, "Đăng ký đã hủy.");
+      if (enrollment.userId) throw fail(409, "Đăng ký đã liên kết tài khoản.");
       let user;
       if (data.mode === "existing") {
-        user = one("users", data.userId ?? 0);
+        user = await one("users", data.userId ?? 0);
         if (user?.role !== "student")
           throw fail(400, "Hãy chọn tài khoản học viên.");
       } else {
         if (!data.password)
           throw fail(400, "Vui lòng đặt mật khẩu ban đầu, ít nhất 10 ký tự.");
-        const id = write("users", {
+        const id = await write("users", {
           name: enrollment.name,
           email: enrollment.email,
           phone: enrollment.phone,
@@ -104,14 +115,17 @@ export function mountManagement(app, { db, requireUser, one, write }) {
           passwordHash: hashPassword(data.password),
           role: "student",
         });
-        user = one("users", id);
+        user = await one("users", id);
       }
-      assertUniqueEnrollment(
+      await assertUniqueEnrollment(
         db,
-        { ...enrollment, userId: user.id },
+        {
+          ...enrollment,
+          userId: user.id,
+        },
         enrollment.id,
       );
-      write(
+      await write(
         "enrollments",
         {
           userId: user.id,
@@ -120,83 +134,97 @@ export function mountManagement(app, { db, requireUser, one, write }) {
         },
         enrollment.id,
       );
-      audit(req, "intake", "enrollments", enrollment.id);
-      db.exec("COMMIT");
-      res.json({
-        user: safeUser(user),
-        enrollment: one("enrollments", enrollment.id),
-      });
-    } catch (e) {
-      db.exec("ROLLBACK");
-      throw e;
-    }
-  });
-  app.get("/api/admin/materials", (_req, res) =>
+      await audit(req, "intake", "enrollments", enrollment.id);
+      return {
+        status: 200,
+        body: {
+          user: safeUser(user),
+          enrollment: await one("enrollments", enrollment.id),
+        },
+      };
+    }),
+  );
+  app.get("/api/admin/materials", async (_req, res) =>
     res.json(
-      db
+      await db
         .prepare(
           "SELECT id,classId,title,lesson,filename,mime,size,createdAt FROM materials ORDER BY id DESC",
         )
         .all(),
     ),
   );
-  app.post("/api/admin/materials", async (req, res) => {
-    const data = uploadSchema.parse(req.body),
-      content = Buffer.from(data.content, "base64");
-    if (content.length > 5 * 1024 * 1024) throw fail(413, "Tệp tối đa 5 MB.");
-    if (content.toString("base64") !== data.content)
-      throw fail(400, "Dữ liệu tệp không hợp lệ.");
-    if (!one("classes", data.classId)) throw fail(404, "Không tìm thấy lớp.");
-    const mime = await fileMime(data.filename, content);
-    const id = Number(
-      db
-        .prepare(
-          "INSERT INTO materials(classId,title,lesson,filename,mime,size,content) VALUES (?,?,?,?,?,?,?)",
-        )
-        .run(
-          data.classId,
-          data.title,
-          data.lesson,
-          data.filename,
-          mime,
-          content.length,
-          content,
+  app.post(
+    "/api/admin/materials",
+    mutation(db, async (req, _res) => {
+      const data = uploadSchema.parse(req.body),
+        content = Buffer.from(data.content, "base64");
+      if (content.length > 5 * 1024 * 1024) throw fail(413, "Tệp tối đa 5 MB.");
+      if (content.toString("base64") !== data.content)
+        throw fail(400, "Dữ liệu tệp không hợp lệ.");
+      if (!(await one("classes", data.classId)))
+        throw fail(404, "Không tìm thấy lớp.");
+      const mime = await fileMime(data.filename, content);
+      const id = Number(
+        (
+          await db
+            .prepare(
+              "INSERT INTO materials(classId,title,lesson,filename,mime,size,content) VALUES (?,?,?,?,?,?,?)",
+            )
+            .run(
+              data.classId,
+              data.title,
+              data.lesson,
+              data.filename,
+              mime,
+              content.length,
+              content,
+            )
         ).lastInsertRowid,
-    );
-    audit(req, "upload", "materials", id);
-    res
-      .status(201)
-      .json({
-        id,
-        classId: data.classId,
-        title: data.title,
-        lesson: data.lesson,
-        filename: data.filename,
-        mime,
-        size: content.length,
-      });
-  });
-  app.delete("/api/admin/materials/:id", (req, res) => {
-    const row = db
-      .prepare("SELECT id FROM materials WHERE id=?")
-      .get(req.params.id);
-    if (!row) throw fail(404, "Không tìm thấy tài liệu.");
-    db.prepare("DELETE FROM materials WHERE id=?").run(req.params.id);
-    audit(req, "delete", "materials", row.id);
-    res.json({ ok: true });
-  });
-  app.get("/api/materials/:id/download", requireUser, (req, res) => {
-    const row = db
+      );
+      await audit(req, "upload", "materials", id);
+      return {
+        status: 201,
+        body: {
+          id,
+          classId: data.classId,
+          title: data.title,
+          lesson: data.lesson,
+          filename: data.filename,
+          mime,
+          size: content.length,
+        },
+      };
+    }),
+  );
+  app.delete(
+    "/api/admin/materials/:id",
+    mutation(db, async (req, _res) => {
+      const row = await db
+        .prepare("SELECT id FROM materials WHERE id=?")
+        .get(req.params.id);
+      if (!row) throw fail(404, "Không tìm thấy tài liệu.");
+      await db.prepare("DELETE FROM materials WHERE id=?").run(req.params.id);
+      await audit(req, "delete", "materials", row.id);
+      return {
+        status: 200,
+        body: {
+          ok: true,
+        },
+      };
+    }),
+  );
+  app.get("/api/materials/:id/download", requireUser, async (req, res) => {
+    const row = await db
       .prepare("SELECT * FROM materials WHERE id=?")
       .get(req.params.id);
     if (!row) throw fail(404, "Không tìm thấy tài liệu.");
     if (
       req.user.role !== "admin" &&
-      !db
+      !(await db
         .prepare(
           "SELECT 1 FROM enrollments WHERE userId=? AND classId=? AND status='confirmed'",
         )
-        .get(req.user.id, row.classId)
+        .get(req.user.id, row.classId))
     )
       throw fail(
         403,
@@ -210,7 +238,7 @@ export function mountManagement(app, { db, requireUser, one, write }) {
     res.set("Cache-Control", "no-store");
     res.send(Buffer.from(row.content));
   });
-  const report = (query) => {
+  const report = async (query) => {
     const year = today().slice(0, 4),
       from = query.from || `${year}-01-01`,
       to = query.to || `${year}-12-31`;
@@ -226,9 +254,9 @@ export function mountManagement(app, { db, requireUser, one, write }) {
       (Date.parse(to) - Date.parse(from)) / 86400000 > 1826
     )
       throw fail(400, "Chọn khoảng ngày hợp lệ, tối đa 5 năm.");
-    const stats = db
+    const stats = await db
       .prepare(
-        "SELECT strftime('%Y-%m',datetime(createdAt,'+7 hours')) month,COUNT(*) total,SUM(status='confirmed') confirmed,SUM(status='pending') pending,SUM(status='cancelled') cancelled FROM enrollments WHERE date(createdAt,'+7 hours') BETWEEN ? AND ? GROUP BY month ORDER BY month",
+        `SELECT ${localMonth} AS "month",COUNT(*) total,SUM(CASE WHEN status='confirmed' THEN 1 ELSE 0 END) confirmed,SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) pending,SUM(CASE WHEN status='cancelled' THEN 1 ELSE 0 END) cancelled FROM enrollments WHERE ${localDate("createdAt")} BETWEEN ? AND ? GROUP BY "month" ORDER BY "month"`,
       )
       .all(from, to);
     const monthly = [];
@@ -246,21 +274,29 @@ export function mountManagement(app, { db, requireUser, one, write }) {
       );
       cursor.setUTCMonth(cursor.getUTCMonth() + 1);
     }
-    const classes = db
-      .prepare(
-        "SELECT c.*,co.name courseName,t.name teacherName,COUNT(e.id) enrolled FROM classes c JOIN courses co ON co.id=c.courseId JOIN teachers t ON t.id=c.teacherId LEFT JOIN enrollments e ON e.classId=c.id AND e.status='confirmed' GROUP BY c.id ORDER BY c.startDate",
-      )
-      .all()
-      .map((c) => ({
-        ...c,
-        weekdays: JSON.parse(c.weekdays),
-        effectiveStatus: classStatus(c),
-      }));
-    return { from, to, monthly, classes };
+    const classes = (
+      await db
+        .prepare(
+          "SELECT c.*,co.name courseName,t.name teacherName,COUNT(e.id) enrolled FROM classes c JOIN courses co ON co.id=c.courseId JOIN teachers t ON t.id=c.teacherId LEFT JOIN enrollments e ON e.classId=c.id AND e.status='confirmed' GROUP BY c.id,co.name,t.name ORDER BY c.startDate",
+        )
+        .all()
+    ).map((c) => ({
+      ...c,
+      weekdays: JSON.parse(c.weekdays),
+      effectiveStatus: classStatus(c),
+    }));
+    return {
+      from,
+      to,
+      monthly,
+      classes,
+    };
   };
-  app.get("/api/admin/reports", (req, res) => res.json(report(req.query)));
+  app.get("/api/admin/reports", async (req, res) =>
+    res.json(await report(req.query)),
+  );
   app.get("/api/admin/reports/export.xlsx", async (req, res) => {
-    const data = report(req.query),
+    const data = await report(req.query),
       workbook = new ExcelJS.Workbook();
     workbook.creator = "Vinh English Center";
     const addSheet = (name, columns, rows) => {
@@ -271,16 +307,34 @@ export function mountManagement(app, { db, requireUser, one, write }) {
         width,
       }));
       for (const row of rows) sheet.addRow(row);
-      sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+      sheet.getRow(1).font = {
+        bold: true,
+        color: {
+          argb: "FFFFFFFF",
+        },
+      };
       sheet.getRow(1).fill = {
         type: "pattern",
         pattern: "solid",
-        fgColor: { argb: "FF17634D" },
+        fgColor: {
+          argb: "FF17634D",
+        },
       };
-      sheet.views = [{ state: "frozen", ySplit: 1 }];
+      sheet.views = [
+        {
+          state: "frozen",
+          ySplit: 1,
+        },
+      ];
       sheet.autoFilter = {
-        from: { row: 1, column: 1 },
-        to: { row: 1, column: columns.length },
+        from: {
+          row: 1,
+          column: 1,
+        },
+        to: {
+          row: 1,
+          column: columns.length,
+        },
       };
       return sheet;
     };
@@ -309,9 +363,9 @@ export function mountManagement(app, { db, requireUser, one, write }) {
       ],
       data.classes,
     );
-    const members = db
+    const members = await db
       .prepare(
-        "SELECT e.id,e.name,e.email,e.phone,c.name className,e.status,e.createdAt FROM enrollments e JOIN classes c ON c.id=e.classId WHERE date(e.createdAt,'+7 hours') BETWEEN ? AND ? ORDER BY c.id,e.id",
+        `SELECT e.id,e.name,e.email,e.phone,c.name className,e.status,e.createdAt FROM enrollments e JOIN classes c ON c.id=e.classId WHERE ${localDate("e.createdAt")} BETWEEN ? AND ? ORDER BY c.id,e.id`,
       )
       .all(data.from, data.to);
     const labels = {
@@ -330,7 +384,10 @@ export function mountManagement(app, { db, requireUser, one, write }) {
         ["status", "Trạng thái", 22],
         ["createdAt", "Ngày tạo (UTC)", 24],
       ],
-      members.map((m) => ({ ...m, status: labels[m.status] })),
+      members.map((m) => ({
+        ...m,
+        status: labels[m.status],
+      })),
     );
     res.set(
       "Content-Type",
