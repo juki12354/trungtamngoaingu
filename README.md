@@ -4,7 +4,7 @@
 
 ## Mở website dùng thử miễn phí
 
-**[Bấm vào đây để mở website](https://pole-suite-fraction-leasing.trycloudflare.com)** — link tạm tạo ngày 01/10/2026.
+**[Bấm vào đây để mở website](https://publisher-mere-either-oecd.trycloudflare.com)** — link tạm tạo ngày 08/10/2026.
 
 Bản dùng thử có đăng nhập, đăng ký học và quản trị, chạy bằng database mẫu riêng. Link chỉ hoạt động khi máy của chủ dự án và chương trình chia sẻ còn chạy; tắt chương trình sẽ ngừng truy cập. Tài khoản Admin của bản chia sẻ được lưu riêng trên máy, không công khai trong repository. Người xem có thể tự tạo tài khoản học viên qua trang Đăng nhập.
 
