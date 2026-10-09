@@ -1,4 +1,15 @@
-# Kết quả kiểm tra — 30/09/2026
+# Kết quả kiểm tra — 08/10/2026
+
+## Hosting miễn phí với PostgreSQL
+
+- `npm run lint`, `npm run build`, `npm audit --audit-level=moderate`: đạt; audit 0 lỗ hổng.
+- SQLite: **44 bài đạt**, 1 bài chuyển dữ liệu PostgreSQL được bỏ qua có chủ đích. PostgreSQL 17 thật: **45/45 đạt**, gồm kiểm tra duyệt đồng thời không vượt sĩ số, lịch trùng, nộp bài đồng thời chỉ tạo một kết quả, bootstrap Admin không ghi đè mật khẩu, chuyển dữ liệu và mở lại database.
+- Trình duyệt Chromium: **12/12 đạt trên SQLite** (1,3 phút), **12/12 đạt trên PostgreSQL** (1,1 phút), bao gồm đăng ký/duyệt lớp, bài test, tài liệu, đổi mật khẩu, báo cáo Excel, responsive và kiểm tra accessibility tự động.
+- Kiểm tra riêng bằng các lệnh thực tế: `migrate:postgres` chuyển 14 bảng, SHA-256 SQLite nguồn không đổi; khởi động production tạo Admin, cookie có Secure; restart bỏ biến mật khẩu vẫn đăng nhập được, còn đủ 26 lớp và yêu cầu tư vấn; `backup` tạo dump và `pg_restore` phục hồi vào DB mới thành công.
+- `render.yaml` hợp lệ theo schema chính thức của Render; `plan: free`, không có disk. Chưa tạo dịch vụ Render/Neon hoặc kiểm tra HTTPS trên URL cloud thực tế vì cần tài khoản của chủ dự án. Các kết quả PostgreSQL trên đây là kiểm tra local, không phải bằng chứng website đã được triển khai.
+- CI có job PostgreSQL riêng chạy lại API và trình duyệt bằng database kiểm thử mới, không dùng database của người dùng.
+
+## Lịch sử ngày 30/09/2026
 
 ## Cập nhật trải nghiệm công khai
 

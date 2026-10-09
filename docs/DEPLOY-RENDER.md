@@ -1,48 +1,88 @@
-# Đưa website đầy đủ lên mạng bằng Render
+# Hosting miễn phí: Render Free + Neon Free
 
-Repository GitHub lưu mã nguồn. Website sẽ có một link HTTPS riêng do Render cấp; sau khi chạy thành công, gắn link đó vào mục **About → Website** và đầu README trên GitHub để người xem bấm mở.
+Website chạy trên Render; tài khoản, đăng ký, điểm và tài liệu nằm trong PostgreSQL của Neon. Tắt máy cá nhân vẫn truy cập được. Người xem dùng link HTTPS `*.onrender.com`, tự đăng ký tài khoản học viên và đăng nhập.
 
-## Chi phí và dữ liệu
+**Trạng thái:** đã chuẩn bị mã nguồn và cấu hình; chưa có URL Render thực tế được xác minh. Chủ dự án cần đăng nhập/tạo tài khoản tại [Render](https://dashboard.render.com/) và [Neon](https://console.neon.tech/). Không gửi mật khẩu hoặc chuỗi kết nối vào chat/GitHub.
 
-Cấu hình `render.yaml` dùng một Web Service Node.js có phí (`0.5c-512mb`) và disk 1 GB. Xem tổng chi phí Render hiển thị trước khi tạo dịch vụ. Không cần mua tên miền để dùng link `onrender.com` do Render cấp.
+## Giới hạn miễn phí
 
-Không chọn Free cho database SQLite cần lưu lâu dài: filesystem của dịch vụ Free có thể bị mất khi redeploy, restart hoặc ngủ. Database của cấu hình này nằm tại `/var/data/center.sqlite` trên persistent disk. Mã nguồn và file build nằm ngoài disk.
+- Chọn **Free** ở cả hai dịch vụ. Cấu hình không tạo disk trả phí hoặc Render Postgres.
+- Render Free ngủ sau 15 phút không có truy cập; lần mở tiếp theo có thể mất khoảng một phút. Có giới hạn 750 giờ instance miễn phí mỗi workspace/tháng và hạn mức lưu lượng/build. Xem [Render Free](https://render.com/docs/free).
+- Neon Free hiện có 1 GB/project và 100 CU-hours/project/tháng; theo dõi Usage khi tải nhiều tài liệu. Xem [Neon Free](https://neon.com/blog/neon-free-plan-1-gb-per-project).
+- Không chọn nâng cấp trả phí. Nếu nền tảng yêu cầu xác minh bằng thẻ, dừng bước đó; hướng dẫn này không yêu cầu chấp nhận khoản phí. Gói Free không có cam kết hoạt động liên tục.
 
-## Các bước trên Render
+## 1. Tạo database Neon
 
-1. Mở <https://dashboard.render.com>, tạo tài khoản hoặc đăng nhập bằng GitHub. Khi kết nối GitHub, cấp quyền cho repository `juki12354/trungtamngoaingu`.
-2. Chọn **New → Blueprint**, chọn repository trên, nhánh **main**, file **render.yaml** ở gốc dự án.
-3. Render đọc cấu hình Node 24, build React, chạy Express, health check và disk. Xem lại gói dịch vụ, khu vực Singapore và chi phí trước khi tiếp tục.
-4. Điền `ADMIN_EMAIL` là email bạn sẽ dùng đăng nhập, `ADMIN_PASSWORD` là mật khẩu riêng dài ít nhất 14 ký tự. Điền trực tiếp trong Render; không đưa mật khẩu vào GitHub hoặc README. Chọn **Deploy Blueprint** khi bạn chấp nhận chi phí.
-5. Khi Web Service báo **Live**, mở mục **Shell của chính Web Service**, chạy từng lệnh:
+1. Tạo project **Free**, tên `vinh-english-center`, PostgreSQL **17**, ưu tiên khu vực gần Singapore nếu có.
+2. Mở **Connect**, chọn database/role và lấy connection string PostgreSQL. Có thể bật connection pooling cho ứng dụng.
+3. Giữ TLS; dùng `sslmode=verify-full`. Không tắt kiểm tra chứng chỉ.
+4. Muốn giữ dữ liệu đang có trên máy: làm mục **Chuyển dữ liệu cũ** dưới đây **trước lần khởi động đầu tiên trên Render**. Nếu bỏ qua, website mới có 7 khóa, 9 giáo viên, 26 lớp mẫu và 25 câu hỏi; chưa có học viên.
 
-   ```sh
-   npm run setup:admin
-   npm run seed:classes
-   ```
+## 2. Tạo Web Service Render
 
-   Lệnh đầu tạo Admin; lệnh sau bổ sung 18 ca học, để database mới có tổng cộng 26 lớp. Chỉ chạy setup Admin một lần; chạy lại cùng email sẽ báo đã tồn tại và không đổi mật khẩu. Không chạy các lệnh database trong Build Command, Pre-deploy Command hay One-off Job vì các môi trường đó không có disk của dịch vụ.
+Cách nhanh: [Deploy từ repository](https://render.com/deploy?repo=https://github.com/juki12354/trungtamngoaingu). Blueprint đọc `render.yaml` ở nhánh `main`. Kiểm tra gói **Free**, không có disk/dịch vụ trả phí.
 
-6. Trong **Environment**, xóa `ADMIN_PASSWORD` sau khi tạo Admin, lưu và khởi động lại dịch vụ. Tài khoản đã tạo vẫn ở database trên disk. Không dùng tài khoản demo trong README: chế độ production không tạo các tài khoản đó.
-7. Mở URL HTTPS Render cấp. Thử đăng nhập bằng Admin vừa tạo; kiểm tra danh sách khóa, giáo viên, lịch khai giảng. Đăng xuất, tự tạo tài khoản học viên và gửi đăng ký thử. Trở lại Admin để kiểm tra yêu cầu được lưu.
-8. Restart dịch vụ một lần rồi kiểm tra lại tài khoản/đăng ký để xác nhận dữ liệu bền vững. Sau đó sao chép URL chính xác, thêm vào **GitHub repository → About (biểu tượng bánh răng) → Website**. Không dùng URL dashboard Render làm link website.
+Hoặc chọn **New → Web Service → Public Git Repository**, nhập `https://github.com/juki12354/trungtamngoaingu.git`:
 
-Database trên hosting là database mới từ dữ liệu mẫu trong mã nguồn. Tài khoản và đăng ký trên máy tính không được tự tải lên. Không upload database chứa dữ liệu riêng lên repository công khai.
+| Mục | Giá trị |
+| --- | --- |
+| Branch / Runtime | `main` / `Node` |
+| Region / Instance type | `Singapore` / **Free** |
+| Build command | `npm ci --include=dev && npm run build` |
+| Start command | `npm start` |
+| Health check | `/api/health` |
 
-## Cập nhật và vận hành
+Điền trực tiếp trong **Environment**:
 
-- Render được cấu hình triển khai khi các kiểm tra của nhánh main thành công. Chỉ nên có một instance vì ứng dụng dùng một file SQLite.
-- `npm run backup` trong Shell tạo bản sao nhất quán tại `/var/data/backups/`; định kỳ tải bản sao ra nơi lưu riêng. Không xóa disk nếu cần giữ dữ liệu.
-- HTTPS dùng cookie Secure. Khi kiểm tra lỗi đăng nhập, xem Logs và HTTP response của API; giữ nguyên kiểm tra Origin.
-- Hiện ứng dụng giới hạn tần suất theo kết nối trực tiếp. Sau proxy Render, nhiều người dùng có thể cùng chia sẻ hạn mức. Trước khi dùng cho nhiều học viên thật, xác minh chuỗi proxy rồi cấu hình trust proxy phù hợp; không bật trust proxy cho mọi nguồn một cách tùy ý.
-- Nếu build lỗi: xem bước `npm ci` / `npm run build`. Nếu dịch vụ không lên: kiểm tra `HOST=0.0.0.0`, PORT và DB_PATH đúng disk. Khi báo nguồn yêu cầu không hợp lệ, cần kiểm tra Host/Origin do proxy chuyển tiếp trước khi thay đổi cấu hình.
+| Biến | Giá trị |
+| --- | --- |
+| `NODE_VERSION` | `24.17.0` |
+| `NODE_ENV` | `production` |
+| `HOST` | `0.0.0.0` |
+| `PORT` | `10000` |
+| `DATABASE_URL` | Chuỗi kết nối Neon vừa lấy |
+| `ADMIN_EMAIL` | Email riêng để đăng nhập quản trị |
+| `ADMIN_PASSWORD` | Mật khẩu riêng từ 14–128 ký tự |
 
-## Tài liệu chính thức
+Chọn tạo/triển khai dịch vụ. Không tạo Persistent Disk và không đặt `DB_PATH`. Server từ chối khởi động trên Render nếu thiếu `DATABASE_URL`, tránh lưu nhầm trên ổ đĩa tạm.
 
-- [Express trên Render](https://render.com/docs/deploy-node-express-app)
-- [Blueprint và các trường cấu hình](https://render.com/docs/blueprint-spec)
-- [Persistent disk và giới hạn môi trường build](https://render.com/docs/disks)
-- [Giới hạn dịch vụ Free](https://render.com/docs/free)
-- [Bảng giá hiện hành](https://render.com/pricing)
+Database chưa có Admin: server tự tạo bằng hai biến trên, không cần Shell. Khởi động lại **không đổi mật khẩu Admin hiện có**. Nếu đã nhập SQLite, dùng tài khoản Admin đã nhập; biến khởi tạo không ghi đè nó.
 
-Cấu hình này là bước chuẩn bị, không tự tạo tài khoản Render, mua hosting hay chứng minh website đã hoạt động công khai. Chỉ xác nhận triển khai sau khi có URL thực và kiểm tra trực tiếp.
+## 3. Kiểm tra và chia sẻ
+
+1. Đợi **Live**, mở link HTTPS `*.onrender.com` được cấp.
+2. Đăng nhập Admin, kiểm tra khóa/lớp/giáo viên. Khi đăng nhập thành công, xóa `ADMIN_PASSWORD` trong Render và lưu; tài khoản vẫn ở Neon.
+3. Tạo học viên, đăng ký một lớp; dùng Admin duyệt rồi kiểm tra lịch học và tải tài liệu.
+4. Restart Web Service; đăng nhập lại, xác nhận dữ liệu và tài liệu vẫn còn.
+5. Mở từ điện thoại bằng mạng khác khi đã tắt máy cá nhân.
+6. Đặt URL website vào **GitHub → About → Website** và thay link đầu README. URL dashboard không phải link cho học viên.
+
+Chỉ công bố URL sau khi kiểm tra. Link Cloudflare tạm cũ vẫn phụ thuộc máy cá nhân.
+
+## Chuyển dữ liệu cũ (tùy chọn)
+
+Neon đích phải **trống**, chưa được website khởi tạo. Nếu đã khởi tạo nhầm, dùng database mới trống; công cụ không ghi đè dữ liệu hiện có.
+
+1. Sao lưu SQLite: `npm.cmd run backup` trước khi đặt `DATABASE_URL`.
+2. Đổi mật khẩu các tài khoản demo đã công khai trong README nếu giữ chúng để đưa lên mạng.
+3. Trong `.env` local (bị Git bỏ qua), đặt `DB_PATH` đến SQLite nguồn, `DATABASE_URL` đến Neon mới. Đặt `NODE_ENV=production` nếu chạy ứng dụng với dữ liệu cloud.
+4. Chạy `npm.cmd run migrate:postgres`. Công cụ mở nguồn chỉ đọc, lấy snapshot nhất quán, chuyển 14 bảng trong một transaction, đối chiếu số bản ghi và chỉnh sequence ID. Giữ mật khẩu đã băm, liên kết và tệp nhị phân; không sửa SQLite nguồn.
+5. Sau thông báo thành công, dùng cùng `DATABASE_URL` ở Render. Giữ bản sao local đến khi kiểm tra website xong.
+
+Lỗi giữa chừng sẽ rollback transaction đích. Các script `seed:classes`, `seed:teachers`, `seed:public` dành cho SQLite local; cloud sửa nội dung qua Admin. PostgreSQL mới đã có các ca học từ lần khởi tạo đầu tiên.
+
+## Sao lưu và hoàn nguyên
+
+Đặt `DATABASE_URL` trong `.env`, cài PostgreSQL client tương thích rồi chạy `npm.cmd run backup`. Windows có thể đặt `PG_DUMP_PATH=C:/Program Files/PostgreSQL/17/bin/pg_dump.exe`. File `.dump` lưu trong `data/backups`, bị Git bỏ qua. Với Neon, ưu tiên connection string **Direct** khi backup/restore. Mật khẩu được truyền bằng biến môi trường, không đặt trong tham số lệnh.
+
+Dùng `pg_restore` vào **database mới trống**; kiểm tra đăng nhập, số bản ghi, tài liệu rồi mới đổi `DATABASE_URL` trên Render. Giữ database cũ để đối chiếu dữ liệu phát sinh. Không chạy mã chỉ hỗ trợ SQLite với database cloud.
+
+## Lỗi thường gặp
+
+- Thiếu/sai `DATABASE_URL`: sửa Environment, không chuyển sang SQLite để bỏ qua lỗi.
+- Chưa có Admin: kiểm tra email và mật khẩu ít nhất 14 ký tự. Email đã thuộc học viên thì chọn email khác.
+- Không giữ phiên đăng nhập: truy cập **HTTPS**, vì cookie production có `Secure`.
+- Hết hạn mức: xem Usage, giảm dung lượng/lưu lượng hoặc đợi chu kỳ mới; không tự nâng cấp trả phí.
+- Rate limit hiện dùng IP kết nối trực tiếp. Sau proxy, nhiều người có thể dùng chung hạn mức. Chỉ cấu hình trust proxy sau khi xác minh chuỗi proxy; không tin mọi `X-Forwarded-For`.
+
+Tài liệu kỹ thuật: [Render Express](https://render.com/docs/deploy-node-express-app), [node-postgres transactions](https://node-postgres.com/features/transactions), [TLS](https://node-postgres.com/features/ssl).

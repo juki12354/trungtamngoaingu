@@ -1,20 +1,15 @@
-# Full React + Express application. A paid service is required for this disk.
-# Review Render's displayed charges before creating the Blueprint.
+# Full React + Express application, free web service with external Neon Free DB.
 services:
   - type: web
     name: vinh-english-center
     runtime: node
-    plan: 0.5c-512mb
+    plan: free
     region: singapore
     branch: main
     buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     autoDeployTrigger: checksPass
-    disk:
-      name: center-data
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: NODE_VERSION
         value: 24.17.0
@@ -24,8 +19,8 @@ services:
         value: 0.0.0.0
       - key: PORT
         value: 10000
-      - key: DB_PATH
-        value: /var/data/center.sqlite
+      - key: DATABASE_URL
+        sync: false
       - key: ADMIN_EMAIL
         sync: false
       - key: ADMIN_PASSWORD

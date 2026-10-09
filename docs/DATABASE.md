@@ -1,5 +1,7 @@
 # Cơ sở dữ liệu
 
+Cập nhật 08/10/2026: hosting dùng PostgreSQL, schema ở `server/postgres-schema.sql`, truy cập bất đồng bộ qua `server/database.js`. Local tiếp tục dùng SQLite. Các thao tác ghi chạy trong transaction; PostgreSQL dùng cùng connection và advisory lock để kiểm tra sĩ số/lịch rồi ghi tuần tự, phù hợp đồ án nhỏ. Restart không ghi đè dữ liệu đã sửa. Lệnh `npm run migrate:postgres` chuyển vào đích trống, giữ nguồn chỉ đọc; xem [triển khai](DEPLOY-RENDER.md).
+
 Cập nhật 30/09/2026: `teachers.nationality` bổ sung quốc tịch; `contacts` bổ sung `kind`, `age`, `courseId` (tham chiếu courses, ON DELETE SET NULL) và `campus`. Migration giữ dữ liệu cũ. Chi tiết API và cập nhật dữ liệu mẫu xem [PUBLIC-EXPERIENCE.md](PUBLIC-EXPERIENCE.md).
 
 SQLite lưu tại `data/center.sqlite`. Schema và ràng buộc chi tiết nằm trong `server/db.js` và `server/migrations.js`.

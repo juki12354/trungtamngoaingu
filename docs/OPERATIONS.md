@@ -1,5 +1,7 @@
 # Vận hành Vinh English Center
 
+**Hosting miễn phí không phụ thuộc máy cá nhân:** dùng [Render Free + Neon Free](DEPLOY-RENDER.md). Khi có `DATABASE_URL`, server dùng PostgreSQL và `npm run backup` dùng `pg_dump`. Không có biến này thì local dùng SQLite như bên dưới. Production tự khởi tạo Admin bằng biến môi trường nếu chưa có; không cần Shell Render. Các hướng dẫn ổ đĩa bền vững bên dưới áp dụng cho máy chủ SQLite riêng.
+
 ## Chạy và xử lý lỗi thường gặp
 
 1. Cài Node.js 24+, mở PowerShell tại thư mục chứa `package.json`.

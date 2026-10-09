@@ -1,16 +1,18 @@
 # Vinh English Center — Website trung tâm ngoại ngữ
 
-Đồ án chạy thực tế bằng **React + Vite**, giao diện tiếng Việt, có **Express API + SQLite**. Dữ liệu đăng ký, tài khoản, điểm và thay đổi của Admin được lưu trong database; không dùng localStorage để giả lập backend.
+Đồ án chạy thực tế bằng **React + Vite**, giao diện tiếng Việt, có **Express API**, **SQLite khi chạy local** và **PostgreSQL khi dùng hosting**. Dữ liệu đăng ký, tài khoản, điểm và thay đổi của Admin được lưu trong database.
 
-## Mở website dùng thử miễn phí
+## Hosting miễn phí, không cần bật máy cá nhân
+
+Đã có cấu hình **Render Free + Neon Free**, hỗ trợ đăng nhập, đăng ký, Admin và lưu dữ liệu. **Chưa có URL hosting chính thức**: cần tạo tài khoản và điền cấu hình dịch vụ. Làm theo [hướng dẫn triển khai](docs/DEPLOY-RENDER.md), hoặc [mở Deploy to Render](https://render.com/deploy?repo=https://github.com/juki12354/trungtamngoaingu).
+
+Render Free ngủ khi không truy cập; lần mở lại có thể chờ khoảng một phút. Dữ liệu lưu riêng ở Neon vẫn còn khi server khởi động lại. Cả hai có hạn mức miễn phí; không chọn gói trả phí.
+
+## Link chia sẻ tạm trước đây
 
 **[Bấm vào đây để mở website](https://publisher-mere-either-oecd.trycloudflare.com)** — link tạm tạo ngày 08/10/2026.
 
 Bản dùng thử có đăng nhập, đăng ký học và quản trị, chạy bằng database mẫu riêng. Link chỉ hoạt động khi máy của chủ dự án và chương trình chia sẻ còn chạy; tắt chương trình sẽ ngừng truy cập. Tài khoản Admin của bản chia sẻ được lưu riêng trên máy, không công khai trong repository. Người xem có thể tự tạo tài khoản học viên qua trang Đăng nhập.
-
-## Hosting lâu dài (tùy chọn, hiện chưa sử dụng)
-
-Đã có cấu hình `render.yaml` để chạy đầy đủ React, API và database trên Render. Xem [hướng dẫn triển khai từng bước](docs/DEPLOY-RENDER.md). Đây là phương án có phí nếu sau này cần chạy lâu dài; hiện chưa tạo dịch vụ Render. Link dùng thử phía trên dùng Cloudflare Quick Tunnel, không cần mua hosting hay tên miền.
 
 ## Chạy trên Windows
 
