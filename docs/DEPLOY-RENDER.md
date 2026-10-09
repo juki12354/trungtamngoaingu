@@ -2,7 +2,11 @@
 
 Website chạy trên Render; tài khoản, đăng ký, điểm và tài liệu nằm trong PostgreSQL của Neon. Tắt máy cá nhân vẫn truy cập được. Người xem dùng link HTTPS `*.onrender.com`, tự đăng ký tài khoản học viên và đăng nhập.
 
-**Trạng thái:** đã chuẩn bị mã nguồn và cấu hình; chưa có URL Render thực tế được xác minh. Chủ dự án cần đăng nhập/tạo tài khoản tại [Render](https://dashboard.render.com/) và [Neon](https://console.neon.tech/). Không gửi mật khẩu hoặc chuỗi kết nối vào chat/GitHub.
+**Trạng thái ngày 09/10/2026:** đã triển khai và xác minh tại **https://vinh-english-center.onrender.com**. Render dùng gói **Free**, khu vực **Ohio**, kết nối Neon cùng khu vực. Đã kiểm tra đăng ký, đăng nhập Admin, duyệt lớp, nhập điểm, tải tài liệu và giữ dữ liệu sau khi restart Render.
+
+Dịch vụ hiện tại đọc `DATABASE_URL` từ Secret File `database.env`, với Start command `node --env-file=/etc/secrets/database.env server/index.js`. Không sửa hoặc tạo lại dịch vụ nếu chỉ cần sử dụng website. Tài khoản và dữ liệu đã được chuyển từ SQLite; mật khẩu demo công khai đã được đổi trong bản cloud. Bản local giữ nguyên.
+
+Quản lý tại [Render](https://dashboard.render.com/) và [Neon](https://console.neon.tech/). Không gửi mật khẩu hoặc chuỗi kết nối vào chat/GitHub. Các bước bên dưới dành cho tạo một bản triển khai mới.
 
 ## Giới hạn miễn phí
 
@@ -13,7 +17,7 @@ Website chạy trên Render; tài khoản, đăng ký, điểm và tài liệu n
 
 ## 1. Tạo database Neon
 
-1. Tạo project **Free**, tên `vinh-english-center`, PostgreSQL **17**, ưu tiên khu vực gần Singapore nếu có.
+1. Tạo project **Free**, tên `vinh-english-center`, PostgreSQL **17**, ưu tiên khu vực **Ohio** để gần Render của dự án.
 2. Mở **Connect**, chọn database/role và lấy connection string PostgreSQL. Có thể bật connection pooling cho ứng dụng.
 3. Giữ TLS; dùng `sslmode=verify-full`. Không tắt kiểm tra chứng chỉ.
 4. Muốn giữ dữ liệu đang có trên máy: làm mục **Chuyển dữ liệu cũ** dưới đây **trước lần khởi động đầu tiên trên Render**. Nếu bỏ qua, website mới có 7 khóa, 9 giáo viên, 26 lớp mẫu và 25 câu hỏi; chưa có học viên.
@@ -27,7 +31,7 @@ Hoặc chọn **New → Web Service → Public Git Repository**, nhập `https:/
 | Mục | Giá trị |
 | --- | --- |
 | Branch / Runtime | `main` / `Node` |
-| Region / Instance type | `Singapore` / **Free** |
+| Region / Instance type | `Ohio` / **Free** |
 | Build command | `npm ci --include=dev && npm run build` |
 | Start command | `npm start` |
 | Health check | `/api/health` |

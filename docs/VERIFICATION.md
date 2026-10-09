@@ -1,4 +1,15 @@
-# Kết quả kiểm tra — 08/10/2026
+# Kết quả kiểm tra — 09/10/2026
+
+## Website công khai trên Render + Neon
+
+- URL thực tế: **https://vinh-english-center.onrender.com**. Render Web Service gói **Free**, Ohio; dữ liệu nằm trên Neon PostgreSQL.
+- Chuyển đủ 14 bảng từ snapshot SQLite, giữ dữ liệu local nguyên vẹn. Catalog cloud có 7 khóa, 9 giáo viên và 26 lớp. Mật khẩu database và mật khẩu demo công khai đã được thay trong bản cloud.
+- Chromium trên HTTPS: tạo tài khoản học viên, đăng nhập, đăng ký lớp qua form, đăng nhập Admin, duyệt/nhập điểm, học viên xem trạng thái và tải PDF: đạt. Không ghi nhận lỗi JavaScript; cookie có Secure và HttpOnly; học viên truy cập API Admin nhận 403.
+- Restart Render thực tế: đăng nhập lại được, đăng ký đã duyệt và điểm còn nguyên, PDF tải xuống khớp từng byte. Bản ghi thử nghiệm được xóa sau kiểm tra.
+- Phát hiện và tái hiện lỗi giới hạn đăng nhập dùng chung IP proxy trên Render. Bổ sung cấu hình tin cậy một proxy khi `RENDER=true`; chạy local vẫn không tin header proxy. Kiểm tra người dùng khác không bị chặn chung và thêm IP giả ở đầu header không vượt được giới hạn.
+- CI GitHub trước triển khai: cả job SQLite và PostgreSQL đều thành công. Những kiểm tra local trước đó được giữ ở phần lịch sử bên dưới.
+
+## Lịch sử ngày 08/10/2026
 
 ## Hosting miễn phí với PostgreSQL
 
@@ -6,7 +17,7 @@
 - SQLite: **44 bài đạt**, 1 bài chuyển dữ liệu PostgreSQL được bỏ qua có chủ đích. PostgreSQL 17 thật: **45/45 đạt**, gồm kiểm tra duyệt đồng thời không vượt sĩ số, lịch trùng, nộp bài đồng thời chỉ tạo một kết quả, bootstrap Admin không ghi đè mật khẩu, chuyển dữ liệu và mở lại database.
 - Trình duyệt Chromium: **12/12 đạt trên SQLite** (1,3 phút), **12/12 đạt trên PostgreSQL** (1,1 phút), bao gồm đăng ký/duyệt lớp, bài test, tài liệu, đổi mật khẩu, báo cáo Excel, responsive và kiểm tra accessibility tự động.
 - Kiểm tra riêng bằng các lệnh thực tế: `migrate:postgres` chuyển 14 bảng, SHA-256 SQLite nguồn không đổi; khởi động production tạo Admin, cookie có Secure; restart bỏ biến mật khẩu vẫn đăng nhập được, còn đủ 26 lớp và yêu cầu tư vấn; `backup` tạo dump và `pg_restore` phục hồi vào DB mới thành công.
-- `render.yaml` hợp lệ theo schema chính thức của Render; `plan: free`, không có disk. Chưa tạo dịch vụ Render/Neon hoặc kiểm tra HTTPS trên URL cloud thực tế vì cần tài khoản của chủ dự án. Các kết quả PostgreSQL trên đây là kiểm tra local, không phải bằng chứng website đã được triển khai.
+- `render.yaml` hợp lệ theo schema chính thức của Render; `plan: free`, không có disk. Tại thời điểm kiểm tra local ngày 08/10 chưa triển khai cloud; kết quả cloud ngày 09/10 ở đầu tài liệu.
 - CI có job PostgreSQL riêng chạy lại API và trình duyệt bằng database kiểm thử mới, không dùng database của người dùng.
 
 ## Lịch sử ngày 30/09/2026

@@ -4,15 +4,13 @@
 
 ## Hosting miễn phí, không cần bật máy cá nhân
 
-Đã có cấu hình **Render Free + Neon Free**, hỗ trợ đăng nhập, đăng ký, Admin và lưu dữ liệu. **Chưa có URL hosting chính thức**: cần tạo tài khoản và điền cấu hình dịch vụ. Làm theo [hướng dẫn triển khai](docs/DEPLOY-RENDER.md), hoặc [mở Deploy to Render](https://render.com/deploy?repo=https://github.com/juki12354/trungtamngoaingu).
+**[Mở website Vinh English Center](https://vinh-english-center.onrender.com)** — đã triển khai và kiểm tra ngày 09/10/2026.
+
+Website chạy trên **Render Free + Neon Free**, dùng được khi máy cá nhân đã tắt. Người xem vào **Đăng nhập → Đăng ký ngay** để tạo tài khoản học viên. Đã kiểm tra đăng ký lớp, Admin duyệt/nhập điểm, tải tài liệu và giữ dữ liệu sau khi khởi động lại máy chủ. Mật khẩu Admin được lưu riêng cho chủ dự án, không công khai trong repository.
+
+Xem [hướng dẫn triển khai và quản lý hosting](docs/DEPLOY-RENDER.md).
 
 Render Free ngủ khi không truy cập; lần mở lại có thể chờ khoảng một phút. Dữ liệu lưu riêng ở Neon vẫn còn khi server khởi động lại. Cả hai có hạn mức miễn phí; không chọn gói trả phí.
-
-## Link chia sẻ tạm trước đây
-
-**[Bấm vào đây để mở website](https://publisher-mere-either-oecd.trycloudflare.com)** — link tạm tạo ngày 08/10/2026.
-
-Bản dùng thử có đăng nhập, đăng ký học và quản trị, chạy bằng database mẫu riêng. Link chỉ hoạt động khi máy của chủ dự án và chương trình chia sẻ còn chạy; tắt chương trình sẽ ngừng truy cập. Tài khoản Admin của bản chia sẻ được lưu riêng trên máy, không công khai trong repository. Người xem có thể tự tạo tài khoản học viên qua trang Đăng nhập.
 
 ## Chạy trên Windows
 

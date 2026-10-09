@@ -38,6 +38,7 @@ export async function createApp({
   databaseUrl,
   dbPath = resolve("data/center.sqlite"),
   demo = process.env.NODE_ENV !== "production",
+  trustProxy = process.env.RENDER === "true" ? 1 : false,
 } = {}) {
   const db = await connectDatabase({
     databaseUrl,
@@ -45,6 +46,8 @@ export async function createApp({
     demo,
   });
   const app = express();
+  // Render's ingress supplies the client IP; local servers trust no proxy.
+  app.set("trust proxy", trustProxy);
   app.locals.db = db;
   app.disable("x-powered-by");
   app.use(

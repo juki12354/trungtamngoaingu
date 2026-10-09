@@ -4,7 +4,7 @@ services:
     name: vinh-english-center
     runtime: node
     plan: free
-    region: singapore
+    region: ohio
     branch: main
     buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
