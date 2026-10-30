@@ -38,6 +38,7 @@ import {
   date,
   statusText,
 } from "../lib";
+import { languages, languageName } from "../../shared/languages.js";
 const resources = [
   ["overview", "Tổng quan", LayoutDashboard],
   ["courses", "Khóa học", BookOpen],
@@ -54,6 +55,7 @@ const resources = [
 ];
 const fields = {
   courses: [
+    ["language", "Ngôn ngữ", "language"],
     ["name", "Tên khóa học"],
     ["category", "Nhóm chương trình"],
     ["level", "Trình độ"],
@@ -66,6 +68,7 @@ const fields = {
     ["material", "Tài liệu học tập", "textarea"],
   ],
   teachers: [
+    ["languages", "Ngôn ngữ giảng dạy (có thể chọn nhiều)", "languages"],
     ["name", "Họ và tên"],
     ["nationality", "Quốc tịch"],
     ["degree", "Bằng cấp / Chứng chỉ"],
@@ -104,6 +107,7 @@ const fields = {
     ["content", "Nội dung bài viết", "textarea"],
   ],
   questions: [
+    ["language", "Ngôn ngữ bài kiểm tra", "language"],
     ["prompt", "Câu hỏi"],
     ["option0", "Đáp án A"],
     ["option1", "Đáp án B"],
@@ -125,6 +129,7 @@ const fields = {
 };
 const defaults = {
   courses: {
+    language: "en",
     category: "Giao tiếp",
     level: "A2",
     audience: "Từ 16 tuổi",
@@ -133,7 +138,7 @@ const defaults = {
     tuition: 3000000,
     image: "/images/adults.jpg",
   },
-  teachers: { experience: 1, image: "/images/teacher1.jpg" },
+  teachers: { experience: 1, image: "/images/teacher1.jpg", languages: ["en"] },
   classes: {
     capacity: 18,
     campus: "Cơ sở Lê Lợi",
@@ -148,7 +153,7 @@ const defaults = {
     category: "Góc học tập",
     image: "/images/ielts.jpg",
   },
-  questions: { answer: 0 },
+  questions: { answer: 0, language: "en" },
 };
 export default function Admin() {
   const { user } = useApp();
@@ -348,7 +353,15 @@ function ResourceTable({ resource, title, onSaved }) {
     [deleting, setDeleting] = useState(null);
   const [intake, setIntake] = useState(null),
     [statusFilter, setStatusFilter] = useState("");
+  const [languageFilter, setLanguageFilter] = useState("");
   const filtered = (data || [])
+    .filter(
+      (row) =>
+        !languageFilter ||
+        (resource === "teachers"
+          ? row.languages.includes(languageFilter)
+          : row.language === languageFilter),
+    )
     .filter((row) => !statusFilter || row.status === statusFilter)
     .filter((row) =>
       Object.values(row).some(
@@ -407,7 +420,7 @@ function ResourceTable({ resource, title, onSaved }) {
     if (resource === "courses")
       return (
         <>
-          {row.category} · {row.level}
+          {languageName(row.language)} · {row.category} · {row.level}
           <small>
             {money(row.tuition)} · {row.lessons} buổi
           </small>
@@ -418,7 +431,8 @@ function ResourceTable({ resource, title, onSaved }) {
         <>
           {row.degree}
           <small>
-            {row.experience} năm · {row.specialty}
+            {row.languages.map(languageName).join(" / ")} · {row.experience} năm
+            · {row.specialty}
           </small>
         </>
       );
@@ -455,7 +469,10 @@ function ResourceTable({ resource, title, onSaved }) {
           {row.options
             .map((v, i) => `${String.fromCharCode(65 + i)}. ${v}`)
             .join(" / ")}
-          <small>Đáp án đúng: {String.fromCharCode(65 + row.answer)}</small>
+          <small>
+            {languageName(row.language)} · Đáp án đúng:{" "}
+            {String.fromCharCode(65 + row.answer)}
+          </small>
         </>
       );
     return (
@@ -468,6 +485,26 @@ function ResourceTable({ resource, title, onSaved }) {
   return (
     <div className="admin-panel">
       <div className="admin-toolbar">
+        {["courses", "teachers", "questions"].includes(resource) && (
+          <label>
+            Ngôn ngữ quản lý
+            <select
+              aria-label="Ngôn ngữ quản lý"
+              value={languageFilter}
+              onChange={(e) => {
+                setLanguageFilter(e.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">Tất cả ngôn ngữ</option>
+              {languages.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="search-box">
           <Search size={18} />
           <input
@@ -644,6 +681,7 @@ function ResourceTable({ resource, title, onSaved }) {
 function EditDialog({ resource, item, onClose, onSaved }) {
   const dialog = useRef(null);
   const { catalog } = useApp();
+  const [selectedCourse, setSelectedCourse] = useState(item.courseId || "");
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -654,6 +692,8 @@ function EditDialog({ resource, item, onClose, onSaved }) {
     setBusy(true);
     setError("");
     const data = Object.fromEntries(new FormData(e.currentTarget));
+    if (resource === "teachers")
+      data.languages = new FormData(e.currentTarget).getAll("languages");
     if (resource === "classes")
       data.weekdays = new FormData(e.currentTarget)
         .getAll("weekdays")
@@ -758,38 +798,74 @@ function EditDialog({ resource, item, onClose, onSaved }) {
               type !== "students" &&
               !(key === "password" && item.id);
             let options =
-              type === "courses"
-                ? catalog.courses
-                : type === "teachers"
-                  ? catalog.teachers
-                  : type === "classStatus"
-                    ? Object.entries(classStatuses).map(([id, name]) => ({
-                        id,
-                        name,
-                      }))
-                    : type === "contactStatus"
-                      ? Object.entries(contactStatuses).map(([id, name]) => ({
+              type === "language"
+                ? languages.map((l) => ({ id: l.code, name: l.name }))
+                : type === "courses"
+                  ? catalog.courses
+                  : type === "teachers"
+                    ? catalog.teachers.filter(
+                        (t) =>
+                          !selectedCourse ||
+                          t.languages.includes(
+                            catalog.courses.find(
+                              (c) => c.id === Number(selectedCourse),
+                            )?.language,
+                          ),
+                      )
+                    : type === "classStatus"
+                      ? Object.entries(classStatuses).map(([id, name]) => ({
                           id,
                           name,
                         }))
-                      : type === "status"
-                        ? Object.entries(statusText).map(([id, name]) => ({
+                      : type === "contactStatus"
+                        ? Object.entries(contactStatuses).map(([id, name]) => ({
                             id,
                             name,
                           }))
-                        : type === "answer"
-                          ? ["A", "B", "C", "D"].map((name, id) => ({
+                        : type === "status"
+                          ? Object.entries(statusText).map(([id, name]) => ({
                               id,
                               name,
                             }))
-                          : null;
+                          : type === "answer"
+                            ? ["A", "B", "C", "D"].map((name, id) => ({
+                                id,
+                                name,
+                              }))
+                            : null;
+            if (type === "languages")
+              return (
+                <fieldset className="span-two language-options" key={key}>
+                  <legend>{label}</legend>
+                  <div className="language-checkboxes">
+                    {languages.map((l) => (
+                      <label key={l.code}>
+                        <input
+                          type="checkbox"
+                          name="languages"
+                          value={l.code}
+                          defaultChecked={value?.includes(l.code)}
+                        />
+                        {l.name}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              );
             return (
               <div className={type === "textarea" ? "span-two" : ""} key={key}>
                 <Field label={label + (required ? " *" : "")}>
                   {options ? (
                     <select
+                      aria-label={label + (required ? " *" : "")}
+                      key={type === "teachers" ? selectedCourse : key}
                       name={key}
                       defaultValue={value ?? ""}
+                      onChange={
+                        type === "courses"
+                          ? (e) => setSelectedCourse(e.target.value)
+                          : undefined
+                      }
                       required={required}
                     >
                       {!["status", "answer"].includes(type) && (

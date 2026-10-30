@@ -10,6 +10,20 @@ export function migrate(db) {
   };
   db.exec("BEGIN IMMEDIATE");
   try {
+    for (const table of [
+      "courses",
+      "questions",
+      "placement_results",
+      "placement_attempts",
+    ])
+      if (
+        table !== "placement_attempts" &&
+        db
+          .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?")
+          .get(table)
+      )
+        add(table, "language", "TEXT NOT NULL DEFAULT 'en'");
+    add("teachers", "languages", "TEXT NOT NULL DEFAULT '[\"en\"]'");
     add("teachers", "achievements", "TEXT NOT NULL DEFAULT ''");
     add("teachers", "nationality", "TEXT NOT NULL DEFAULT ''");
     add("classes", "weekdays", "TEXT NOT NULL DEFAULT '[]'");
@@ -38,6 +52,7 @@ export function migrate(db) {
       CREATE TRIGGER IF NOT EXISTS unique_student_enrollment_insert BEFORE INSERT ON enrollments WHEN NEW.userId IS NOT NULL AND NEW.status!='cancelled' AND EXISTS(SELECT 1 FROM enrollments WHERE userId=NEW.userId AND classId=NEW.classId AND status!='cancelled') BEGIN SELECT RAISE(ABORT, 'UNIQUE constraint failed: enrollments.userId, enrollments.classId'); END;
       CREATE TRIGGER IF NOT EXISTS unique_student_enrollment_update BEFORE UPDATE OF userId,classId,status ON enrollments WHEN NEW.userId IS NOT NULL AND NEW.status!='cancelled' AND EXISTS(SELECT 1 FROM enrollments WHERE userId=NEW.userId AND classId=NEW.classId AND status!='cancelled' AND id!=NEW.id) BEGIN SELECT RAISE(ABORT, 'UNIQUE constraint failed: enrollments.userId, enrollments.classId'); END;
     `);
+    add("placement_attempts", "language", "TEXT NOT NULL DEFAULT 'en'");
     if (
       !db
         .prepare("SELECT 1 FROM metadata WHERE key='structured-schedules-v1'")

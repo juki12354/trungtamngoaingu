@@ -17,6 +17,7 @@ import {
   formatSchedule,
 } from "./domain.js";
 import { mountPlacement } from "./placement.js";
+import { languages, languageCodes } from "../shared/languages.js";
 import { campuses } from "./campuses.js";
 import { mountManagement } from "./management.js";
 const fail = (status, message) =>
@@ -29,7 +30,7 @@ const parseRow = (row) =>
   Object.fromEntries(
     Object.entries(row).map(([key, value]) => [
       key,
-      ["options", "grades", "weekdays", "review"].includes(key)
+      ["options", "grades", "weekdays", "review", "languages"].includes(key)
         ? JSON.parse(value)
         : value,
     ]),
@@ -205,6 +206,7 @@ export async function createApp({
       classes: await classList(),
       news: (await all("news")).reverse(),
       campuses,
+      languages,
     }),
   );
   app.get("/api/auth/me", (req, res) =>
@@ -336,9 +338,17 @@ export async function createApp({
       };
     }),
   );
-  app.get("/api/questions", async (_req, res) =>
-    res.json((await all("questions")).reverse().map(({ answer, ...q }) => q)),
-  );
+  app.get("/api/questions", async (req, res) => {
+    const language = req.query.language || "en";
+    if (!languageCodes.includes(language))
+      throw fail(400, "Ngôn ngữ không hợp lệ.");
+    res.json(
+      (await all("questions"))
+        .reverse()
+        .filter((q) => q.language === language)
+        .map(({ answer, ...q }) => q),
+    );
+  });
   mountPlacement(app, {
     db,
     submitLimit,
@@ -456,7 +466,41 @@ export async function createApp({
     );
   });
   async function validateRelations(resource, data, id) {
+    if (resource === "courses" && id) {
+      const linked = (await all("classes")).filter(
+        (c) => c.courseId === Number(id),
+      );
+      for (const cls of linked)
+        if (
+          !(await one("teachers", cls.teacherId))?.languages.includes(
+            data.language,
+          )
+        )
+          throw fail(400, "Giáo viên các lớp hiện tại chưa dạy ngôn ngữ này.");
+    }
+    if (resource === "teachers" && id) {
+      const linked = (await all("classes")).filter(
+        (c) => c.teacherId === Number(id),
+      );
+      for (const cls of linked)
+        if (
+          !data.languages.includes(
+            (await one("courses", cls.courseId))?.language,
+          )
+        )
+          throw fail(
+            400,
+            "Không thể bỏ ngôn ngữ của lớp giáo viên đang phụ trách.",
+          );
+    }
     if (resource === "classes") {
+      const course = await one("courses", data.courseId),
+        teacher = await one("teachers", data.teacherId);
+      if (!course || !teacher || !teacher.languages.includes(course.language))
+        throw fail(
+          400,
+          "Hãy chọn giáo viên giảng dạy đúng ngôn ngữ của khóa học.",
+        );
       if (data.endDate < data.startDate)
         throw fail(400, "Ngày kết thúc phải sau ngày bắt đầu.");
       const count = (

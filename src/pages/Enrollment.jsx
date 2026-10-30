@@ -9,6 +9,7 @@ import {
   ErrorMessage,
   Success,
   money,
+  LanguageSelect,
 } from "../lib";
 export function Enrollment() {
   const { catalog, user, refreshCatalog } = useApp();
@@ -25,6 +26,9 @@ export function Enrollment() {
     ),
   );
   const [classId, setClassId] = useState(String(initialClass?.id || ""));
+  const [language, setLanguage] = useState(
+    catalog.courses.find((c) => c.id === Number(courseId))?.language || "en",
+  );
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [result, setResult] = useState(null);
@@ -115,6 +119,20 @@ export function Enrollment() {
                 />
               </div>
               <h3>Chọn lớp phù hợp</h3>
+              <LanguageSelect
+                label="Ngôn ngữ muốn học"
+                all={false}
+                value={language}
+                onChange={(v) => {
+                  setLanguage(v);
+                  setCourseId(
+                    String(
+                      catalog.courses.find((c) => c.language === v)?.id || "",
+                    ),
+                  );
+                  setClassId("");
+                }}
+              />
               <Field label="Khóa học *">
                 <select
                   value={courseId}
@@ -125,11 +143,13 @@ export function Enrollment() {
                   required
                 >
                   <option value="">Chọn khóa học</option>
-                  {catalog.courses.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
+                  {catalog.courses
+                    .filter((c) => c.language === language)
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
                 </select>
               </Field>
               <Field label="Lớp, ca học và cơ sở *">

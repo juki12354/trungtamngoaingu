@@ -4002,3 +4002,63 @@ td .text-link {
   line-height: 1.8;
   overflow-wrap: anywhere;
 }
+.language-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 0;
+  max-width: 100%;
+  margin-bottom: 16px;
+}
+.language-filter select {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--border, #dce4de);
+  border-radius: 8px;
+  background: white;
+  color: #214839;
+}
+.catalog-toolbar > * {
+  min-width: 0;
+}
+.catalog-toolbar .language-filter {
+  margin-bottom: 0;
+}
+.language-label {
+  display: inline-block;
+  color: #17634d;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 4px 0 9px;
+}
+.language-tabs {
+  flex-wrap: wrap;
+}
+.language-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.language-checkboxes label {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-weight: 400;
+}
+.language-checkboxes input {
+  width: auto;
+}
+@media (max-width: 600px) {
+  .catalog-toolbar {
+    flex-wrap: wrap;
+  }
+  .catalog-toolbar > * {
+    width: 100%;
+  }
+  .language-tabs button {
+    white-space: normal;
+  }
+}

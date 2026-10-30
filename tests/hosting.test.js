@@ -10,6 +10,7 @@ import {
 } from "../server/database.js";
 import { bootstrapAdmin } from "../server/bootstrap.js";
 import { openDatabase, verifyPassword, hashPassword } from "../server/db.js";
+import { addMultilingual } from "../server/multilingual.js";
 
 test("SQL parameters leave question marks and camel case in literal text intact", () => {
   assert.equal(
@@ -159,6 +160,7 @@ test(
     });
     try {
       const bytes = Buffer.from("%PDF-1.4\nprivate bytes\n%%EOF");
+      await addMultilingual(source);
       source
         .prepare(
           "INSERT INTO materials(classId,title,filename,mime,size,content) VALUES (1,'Private file','lesson.pdf','application/pdf',?,?)",

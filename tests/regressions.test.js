@@ -88,7 +88,9 @@ const registration = (classId, email = "hocvien@example.com") => ({
 test("expired placement attempts cannot create results", async (t) => {
   const { request, student, db } = await setup(t);
   const started = await request("/placement/attempts", "POST", {}, student);
-  await db.prepare("UPDATE placement_attempts SET expires=?").run(Date.now() - 1);
+  await db
+    .prepare("UPDATE placement_attempts SET expires=?")
+    .run(Date.now() - 1);
   const answers = Object.fromEntries(
     started.body.questions.map((q) => [q.id, 0]),
   );
@@ -216,7 +218,9 @@ test("admin cannot approve a pending registration after the class has ended", as
 
 test("placement attempts retain the original question snapshot and retrying submission keeps one result", async (t) => {
   const { request, admin, student } = await setup(t);
-  const original = (await request("/admin/questions", "GET", null, admin)).body;
+  const original = (
+    await request("/admin/questions", "GET", null, admin)
+  ).body.filter((q) => q.language === "en");
   const started = await request("/placement/attempts", "POST", {}, student);
   assert.ok(
     [200, 201].includes(started.status),
@@ -273,7 +277,9 @@ test("placement attempts retain the original question snapshot and retrying subm
 
 test("placement attempts cannot be submitted with an invalid token or by another account", async (t) => {
   const { request, admin, student } = await setup(t);
-  const original = (await request("/admin/questions", "GET", null, admin)).body;
+  const original = (
+    await request("/admin/questions", "GET", null, admin)
+  ).body.filter((q) => q.language === "en");
   const answers = Object.fromEntries(
     original.map((question) => [question.id, question.answer]),
   );

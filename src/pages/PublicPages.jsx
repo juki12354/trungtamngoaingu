@@ -23,6 +23,8 @@ import {
   Field,
   money,
   date,
+  LanguageSelect,
+  languageName,
 } from "../lib";
 import { ConsultationForm } from "./DiscoveryPages";
 export function Courses() {
@@ -38,6 +40,7 @@ export function Courses() {
   const filtered = catalog.courses.filter(
     (c) =>
       (category === "Tất cả" || c.category === category) &&
+      (!params.get("language") || c.language === params.get("language")) &&
       `${c.name} ${c.description}`
         .toLocaleLowerCase("vi")
         .includes(q.toLocaleLowerCase("vi")),
@@ -52,6 +55,10 @@ export function Courses() {
       </PageHeading>
       <section className="section container">
         <div className="catalog-toolbar">
+          <LanguageSelect
+            value={params.get("language") || ""}
+            onChange={(v) => set("language", v)}
+          />
           <label className="search-box">
             <Search size={20} />
             <input
@@ -76,7 +83,9 @@ export function Courses() {
             </select>
           </label>
         </div>
-        <p className="muted">Có {filtered.length} khóa học dành cho bạn</p>
+        <p className="muted" role="status">
+          Có {filtered.length} khóa học dành cho bạn
+        </p>
         <div className="course-grid">
           {filtered.map((c) => (
             <CourseCard key={c.id} course={c} />
@@ -109,7 +118,10 @@ export function CourseDetail() {
   const classes = catalog.classes.filter((v) => v.courseId === c.id);
   return (
     <>
-      <PageHeading eyebrow={c.category} title={c.name}>
+      <PageHeading
+        eyebrow={`${languageName(c.language)} · ${c.category}`}
+        title={c.name}
+      >
         {c.description}
       </PageHeading>
       <section className="section container detail-grid">
@@ -278,6 +290,9 @@ export function Schedule() {
               : "evening";
       return (
         (!get("course") || c.courseId === Number(get("course"))) &&
+        (!get("language") ||
+          catalog.courses.find((course) => course.id === c.courseId)
+            ?.language === get("language")) &&
         (!get("campus") || c.campus === get("campus")) &&
         (!get("from") || c.startDate >= get("from")) &&
         (!get("shift") || shift === get("shift")) &&
@@ -302,17 +317,31 @@ export function Schedule() {
       </PageHeading>
       <section className="section container">
         <div className="discovery-filters">
+          <LanguageSelect
+            label="Lọc ngôn ngữ lớp học"
+            value={get("language")}
+            onChange={(v) => {
+              const next = new URLSearchParams(params);
+              next.delete("course");
+              v ? next.set("language", v) : next.delete("language");
+              setParams(next, { replace: true });
+            }}
+          />
           <Field label="Lọc theo khóa học">
             <select
               value={get("course")}
               onChange={(e) => set("course", e.target.value)}
             >
               <option value="">Tất cả khóa học</option>
-              {catalog.courses.map((c) => (
-                <option value={c.id} key={c.id}>
-                  {c.name}
-                </option>
-              ))}
+              {catalog.courses
+                .filter(
+                  (c) => !get("language") || c.language === get("language"),
+                )
+                .map((c) => (
+                  <option value={c.id} key={c.id}>
+                    {c.name}
+                  </option>
+                ))}
             </select>
           </Field>
           <Field label="Lọc theo cơ sở">
@@ -380,6 +409,11 @@ export function Schedule() {
 }
 export function Teachers() {
   const { catalog } = useApp();
+  const [params, setParams] = useSearchParams();
+  const language = params.get("language") || "";
+  const teachers = catalog.teachers.filter(
+    (t) => !language || t.languages.includes(language),
+  );
   return (
     <>
       <PageHeading
@@ -390,12 +424,17 @@ export function Teachers() {
         mình.
       </PageHeading>
       <section className="section container">
+        <LanguageSelect
+          label="Ngôn ngữ giảng dạy"
+          value={language}
+          onChange={(v) => setParams(v ? { language: v } : {})}
+        />
         <div className="teacher-grid">
           <p className="teacher-disclosure span-all">
-            {catalog.teachers.length} hồ sơ giáo viên minh họa. Bằng cấp và
-            thành tích dưới đây là dữ liệu mẫu phục vụ đồ án.
+            {teachers.length} hồ sơ giáo viên minh họa. Bằng cấp và thành tích
+            dưới đây là dữ liệu mẫu phục vụ đồ án.
           </p>
-          {catalog.teachers.map((t) => (
+          {teachers.map((t) => (
             <article className="teacher-card" key={t.id}>
               <Link to={`/giao-vien/${t.id}`} className="teacher-photo">
                 <img src={t.image} alt={t.name} />
@@ -404,6 +443,9 @@ export function Teachers() {
                 </span>
               </Link>
               <span className="eyebrow">{t.specialty}</span>
+              <p className="language-label">
+                {t.languages.map(languageName).join(" · ")}
+              </p>
               <h2>
                 <Link to={`/giao-vien/${t.id}`}>{t.name}</Link>
               </h2>
@@ -487,8 +529,8 @@ export function About() {
         eyebrow="CÂU CHUYỆN CỦA CHÚNG TÔI"
         title="Từ một lời chào, đến ngàn kết nối."
       >
-        Vinh English được xây dựng từ một niềm tin giản dị: ai cũng xứng đáng có
-        cơ hội tự tin bước ra thế giới.
+        Vinh Languages được xây dựng từ một niềm tin giản dị: ai cũng xứng đáng
+        có cơ hội tự tin bước ra thế giới.
       </PageHeading>
       <section className="section container about-grid">
         <img
@@ -504,7 +546,7 @@ export function About() {
             Những ước mơ lớn.
           </h2>
           <p>
-            Chúng tôi hướng đến môi trường học tiếng Anh cởi mở, nơi bạn được
+            Chúng tôi hướng đến môi trường học ngoại ngữ cởi mở, nơi bạn được
             thử, được sai và được tiến bộ theo nhịp của mình.
           </p>
           <p>
@@ -557,7 +599,7 @@ export function About() {
           <img src="/images/basics.jpg" alt="Góc học tập và đọc sách" />
         </div>
         <p className="muted small-text">
-          Vinh English Center là mô hình trung tâm phục vụ đồ án. Thông tin cơ
+          Vinh Language Center là mô hình trung tâm phục vụ đồ án. Thông tin cơ
           sở và nhân sự là dữ liệu minh họa.
         </p>
       </section>
@@ -587,7 +629,7 @@ export function News() {
         eyebrow="GÓC HỌC TẬP"
         title="Học thêm một điều. Mở thêm một lối."
       >
-        Kinh nghiệm, câu chuyện và những gợi ý nhỏ để bạn học tiếng Anh mỗi
+        Kinh nghiệm, câu chuyện và những gợi ý nhỏ để bạn học ngoại ngữ mỗi
         ngày.
       </PageHeading>
       <section className="section container">
@@ -676,7 +718,7 @@ export function Contact() {
       </PageHeading>
       <section className="section container contact-grid">
         <div>
-          <h2>Ghé thăm Vinh English</h2>
+          <h2>Ghé thăm Vinh Languages</h2>
           <div className="contact-detail">
             <MapPin />
             <div>

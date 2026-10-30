@@ -210,6 +210,7 @@ function StudentContent() {
                           {r.score}/{r.total}
                         </td>
                         <td>
+                          {r.language ? `${r.language.toUpperCase()} · ` : ""}
                           {r.level}
                           <QuizReview review={r.review} />
                         </td>

@@ -1,13 +1,19 @@
 import { mutation } from "./mutation.js";
 import { createHash, randomBytes } from "node:crypto";
 import { fail } from "./domain.js";
+import { languageCodes } from "../shared/languages.js";
 const digest = (token) => createHash("sha256").update(token).digest("hex");
 export function mountPlacement(app, { db, submitLimit, all, write }) {
   app.post(
     "/api/placement/attempts",
     submitLimit,
     mutation(db, async (req, _res) => {
-      const questions = (await all("questions")).reverse();
+      const language = req.body?.language || "en";
+      if (!languageCodes.includes(language))
+        throw fail(400, "Ngôn ngữ không hợp lệ.");
+      const questions = (await all("questions"))
+        .reverse()
+        .filter((q) => q.language === language);
       if (!questions.length)
         throw fail(409, "Bài kiểm tra đang được cập nhật.");
       await db
@@ -17,19 +23,21 @@ export function mountPlacement(app, { db, submitLimit, all, write }) {
         expiresAt = Date.now() + 30 * 60 * 1000;
       await db
         .prepare(
-          "INSERT INTO placement_attempts(token,userId,questions,expires) VALUES (?,?,?,?)",
+          "INSERT INTO placement_attempts(token,userId,questions,expires,language) VALUES (?,?,?,?,?)",
         )
         .run(
           digest(token),
           req.user?.id ?? null,
           JSON.stringify(questions),
           expiresAt,
+          language,
         );
       return {
         status: 201,
         body: {
           token,
           expiresAt,
+          language,
           questions: questions.map(({ answer, ...q }) => q),
         },
       };
@@ -74,17 +82,40 @@ export function mountPlacement(app, { db, submitLimit, all, write }) {
         throw fail(400, "Vui lòng trả lời đủ tất cả câu hỏi.");
       const score = questions.filter((q) => q.answer === answers[q.id]).length,
         ratio = score / questions.length;
+      const language = attempt.language || "en";
       const level =
-        ratio < 0.4 ? "A1" : ratio < 0.7 ? "A2" : ratio < 0.9 ? "B1" : "B2";
+        language === "en"
+          ? ratio < 0.4
+            ? "A1"
+            : ratio < 0.7
+              ? "A2"
+              : ratio < 0.9
+                ? "B1"
+                : "B2"
+          : ratio < 0.7
+            ? "Nhập môn"
+            : "Có nền tảng từ vựng";
       const category =
-        ratio < 0.4 ? "Căn bản" : ratio < 0.7 ? "Giao tiếp" : "IELTS";
+        language === "en"
+          ? ratio < 0.4
+            ? "Căn bản"
+            : ratio < 0.7
+              ? "Giao tiếp"
+              : "IELTS"
+          : ratio < 0.7
+            ? "Căn bản"
+            : "Giao tiếp";
       const course =
         (await db
           .prepare(
-            "SELECT id FROM courses WHERE category=? ORDER BY id LIMIT 1",
+            "SELECT id FROM courses WHERE category=? AND language=? ORDER BY id LIMIT 1",
           )
-          .get(category)) ||
-        (await db.prepare("SELECT id FROM courses ORDER BY id LIMIT 1").get());
+          .get(category, language)) ||
+        (await db
+          .prepare(
+            "SELECT id FROM courses WHERE language=? ORDER BY id LIMIT 1",
+          )
+          .get(language));
       const review = questions.map((q) => ({
         id: q.id,
         prompt: q.prompt,
@@ -94,6 +125,7 @@ export function mountPlacement(app, { db, submitLimit, all, write }) {
       }));
       const id = await write("placement_results", {
         userId: attempt.userId,
+        language,
         score,
         total: questions.length,
         level,
@@ -105,6 +137,7 @@ export function mountPlacement(app, { db, submitLimit, all, write }) {
         total: questions.length,
         level,
         courseId: course?.id ?? null,
+        language,
         review,
       };
       await db

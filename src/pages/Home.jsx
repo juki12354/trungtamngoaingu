@@ -15,13 +15,14 @@ import {
 import { useApp, CourseCard, SectionHeading } from "../lib";
 import { DiscoveryLinks, ConsultationForm } from "./DiscoveryPages";
 import { ClassTable } from "./PublicPages";
+import { languages } from "../../shared/languages.js";
 export default function Home() {
   const { catalog } = useApp();
   const [category, setCategory] = useState("Tất cả");
   const courses =
     category === "Tất cả"
       ? catalog.courses.slice(0, 3)
-      : catalog.courses.filter((c) => c.category === category);
+      : catalog.courses.filter((c) => c.language === category);
   return (
     <>
       <section className="hero">
@@ -43,10 +44,10 @@ export default function Home() {
               </span>
             </h1>
             <p>
-              Tiếng Anh không chỉ là một ngôn ngữ.
-              <br className="desktop-break" /> Đó là sự tự tin để kết nối, khám
-              phá và trở thành
-              <br className="desktop-break" /> phiên bản tốt hơn của chính bạn.
+              Khám phá 16 ngôn ngữ, kết nối với thế giới.
+              <br className="desktop-break" /> Từ tiếng Anh, Trung, Hàn, Nhật
+              đến Pháp, Đức, Ý —
+              <br className="desktop-break" /> chọn hành trình phù hợp với bạn.
             </p>
             <div className="hero-buttons">
               <Link className="button" to="/hoc-thu">
@@ -155,8 +156,8 @@ export default function Home() {
             <span>Học viên tối đa / lớp mẫu</span>
           </div>
           <div>
-            <strong>01</strong>
-            <span>Lộ trình dành riêng cho bạn</span>
+            <strong>{languages.length}</strong>
+            <span>Ngôn ngữ để khám phá</span>
           </div>
         </div>
       </section>
@@ -168,16 +169,19 @@ export default function Home() {
           link="Tất cả khóa học"
           to="/khoa-hoc"
         />
-        <div className="filter-tabs" aria-label="Lọc chương trình">
-          {["Tất cả", ...new Set(catalog.courses.map((c) => c.category))].map(
-            (t) => (
+        <div
+          className="filter-tabs language-tabs"
+          aria-label="Lọc chương trình theo ngôn ngữ"
+        >
+          {[{ code: "Tất cả", name: "Tất cả" }, ...languages].map(
+            ({ code: t, name }) => (
               <button
                 key={t}
                 className={category === t ? "active" : ""}
                 aria-pressed={category === t}
                 onClick={() => setCategory(t)}
               >
-                {t}
+                {name}
               </button>
             ),
           )}
@@ -206,7 +210,7 @@ export default function Home() {
           <div>
             <span className="eyebrow">HỌC KHÁC BIỆT. TIẾN BỘ THẬT.</span>
             <h2>
-              Không chỉ dạy tiếng Anh.
+              Học ngoại ngữ để kết nối.
               <br />
               Chúng tôi khơi mở
               <br />
@@ -244,7 +248,7 @@ export default function Home() {
               </div>
             </div>
             <Link className="text-link" to="/gioi-thieu">
-              Tìm hiểu về Vinh English
+              Tìm hiểu về trung tâm
               <ArrowUpRight size={18} />
             </Link>
           </div>
@@ -318,7 +322,7 @@ export default function Home() {
         </div>
         <div>
           <span className="eyebrow">BƯỚC ĐẦU TIÊN, HOÀN TOÀN MIỄN PHÍ</span>
-          <h2>Bạn đang ở đâu trên hành trình tiếng Anh?</h2>
+          <h2>Bạn muốn bắt đầu với ngôn ngữ nào?</h2>
           <p>
             Dành vài phút khám phá trình độ và tìm khóa học phù hợp với bạn.
           </p>

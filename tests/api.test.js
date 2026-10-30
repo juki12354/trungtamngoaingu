@@ -44,10 +44,10 @@ after(async () => {
   await new Promise((resolve) => server.close(resolve));
   await app.locals.db.close();
 });
-test("catalog exposes seven courses without private student data", async () => {
+test("catalog exposes multilingual courses without private student data", async () => {
   const r = await request("/catalog");
   assert.equal(r.status, 200);
-  assert.equal(r.body.courses.length, 7);
+  assert.equal(r.body.courses.length, 37);
   assert.equal(r.body.users, undefined);
 });
 test("admin routes reject guests and students", async () => {
@@ -325,8 +325,9 @@ test("approval respects class capacity and reducing capacity cannot orphan confi
   await request("/admin/classes/1", "PATCH", { capacity: 18 }, admin);
 });
 test("a fully correct placement submission returns the expected score without trusting client score", async () => {
-  const questions = (await request("/admin/questions", "GET", null, admin))
-    .body;
+  const questions = (
+    await request("/admin/questions", "GET", null, admin)
+  ).body.filter((q) => q.language === "en");
   const answers = Object.fromEntries(questions.map((q) => [q.id, q.answer]));
   const attempt = (await request("/placement/attempts", "POST", {}, student))
     .body;

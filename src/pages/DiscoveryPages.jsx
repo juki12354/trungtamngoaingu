@@ -10,11 +10,16 @@ import {
   ErrorMessage,
   Success,
   Empty,
+  LanguageSelect,
 } from "../lib";
 
 export function ConsultationForm({ trial = false }) {
   const { catalog } = useApp();
   const [params] = useSearchParams();
+  const [language, setLanguage] = useState(
+    catalog.courses.find((c) => String(c.id) === params.get("course"))
+      ?.language || "en",
+  );
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [done, setDone] = useState(false);
@@ -63,6 +68,12 @@ export function ConsultationForm({ trial = false }) {
         autoComplete="name"
       />
       <div className="form-grid">
+        <LanguageSelect
+          label="Ngôn ngữ quan tâm"
+          all={false}
+          value={language}
+          onChange={setLanguage}
+        />
         <Field
           label="Số điện thoại"
           name="phone"
@@ -90,19 +101,26 @@ export function ConsultationForm({ trial = false }) {
         <Field label="Khóa học quan tâm">
           <select
             name="courseId"
+            key={language}
             required
             defaultValue={
-              catalog.courses.some((c) => String(c.id) === params.get("course"))
+              catalog.courses.some(
+                (c) =>
+                  String(c.id) === params.get("course") &&
+                  c.language === language,
+              )
                 ? params.get("course")
                 : ""
             }
           >
             <option value="">Chọn khóa học</option>
-            {catalog.courses.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
+            {catalog.courses
+              .filter((c) => c.language === language)
+              .map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
           </select>
         </Field>
       </div>
@@ -336,8 +354,34 @@ const pathways = [
 ];
 export function Roadmap() {
   const { catalog } = useApp();
+  const [language, setLanguage] = useState("en");
   const [selected, setSelected] = useState(0);
-  const path = pathways[selected];
+  const availablePaths =
+    language === "en"
+      ? pathways
+      : [
+          {
+            name: "Bắt đầu một ngôn ngữ mới",
+            audience: "Người mới bắt đầu",
+            stages: [
+              "Âm, chữ viết & lời chào",
+              "Từ vựng & mẫu câu nền tảng",
+              "Hội thoại và dự án cuối khóa",
+            ],
+            categories: ["Căn bản"],
+          },
+          {
+            name: "Giao tiếp trong đời sống",
+            audience: "Đã có nền tảng ban đầu",
+            stages: [
+              "Ôn phát âm & mẫu câu",
+              "Thực hành theo tình huống",
+              "Vận dụng trong du lịch & công việc",
+            ],
+            categories: ["Giao tiếp"],
+          },
+        ];
+  const path = availablePaths[selected] || availablePaths[0];
   return (
     <>
       <PageHeading
@@ -347,8 +391,17 @@ export function Roadmap() {
         Chọn hướng học để xem các chặng và chương trình đang có.
       </PageHeading>
       <section className="section container">
+        <LanguageSelect
+          label="Ngôn ngữ lộ trình"
+          all={false}
+          value={language}
+          onChange={(v) => {
+            setLanguage(v);
+            setSelected(0);
+          }}
+        />
         <div className="filter-tabs" aria-label="Chọn mục tiêu học">
-          {pathways.map((p, i) => (
+          {availablePaths.map((p, i) => (
             <button
               key={p.name}
               aria-pressed={selected === i}
@@ -382,7 +435,11 @@ export function Roadmap() {
           <h3>Chương trình hiện có</h3>
           <div className="discovery-actions">
             {catalog.courses
-              .filter((c) => path.categories.includes(c.category))
+              .filter(
+                (c) =>
+                  c.language === language &&
+                  path.categories.includes(c.category),
+              )
               .map((c) => (
                 <Link
                   className="button outline"

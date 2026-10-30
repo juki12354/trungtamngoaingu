@@ -1,4 +1,16 @@
-# Kết quả kiểm tra — 09/10/2026
+# Kết quả kiểm tra — 30/10/2026
+
+## Bản trung tâm đa ngôn ngữ
+
+- Danh mục: 16 ngôn ngữ, 37 khóa, 24 giáo viên; database local và SQL Server có 116 lớp và 175 câu hỏi. API qua Vite tại `http://127.0.0.1:5173/api/catalog` trả đúng số lượng. Chạy lại seed không thêm trùng.
+- `npm run lint`, `npm run build`: đạt. Bộ API/regression SQLite đạt 47 bài, bỏ qua 1 bài yêu cầu PostgreSQL; PostgreSQL 17 tách biệt đạt 48/48. Bổ sung sau đó một kiểm tra SQLite cũ nâng cấp/khởi động hai lần, giữ nguyên tài khoản, hash mật khẩu, đăng ký, học phí và thành tích: đạt.
+- Chromium: 12 kịch bản cũ vẫn đạt; 3 kịch bản đa ngôn ngữ đạt sau khi sửa locator kiểm thử và bổ sung nhãn bộ chọn. Kiểm tra lọc đủ 16 ngôn ngữ, giáo viên Nhật, ca tối Hàn, đăng ký Đức, khảo sát Hàn và gợi ý đúng ngôn ngữ, lộ trình Ý và quản lý trường ngôn ngữ trong Admin.
+- Catalog kiểm tra tại 360/1440px, không tràn ngang; Axe tự động trên danh sách khóa sau lọc không ghi nhận vi phạm trong phạm vi kiểm tra. Đã xem ảnh chụp desktop.
+- Chạy lại 3 kịch bản trình duyệt đa ngôn ngữ trên PostgreSQL 17 thật: 3/3 đạt (18,4 giây), dùng database thử riêng và đã đóng sau kiểm tra.
+- SQL Server 2022: sao lưu database trước nâng cấp; chạy 06/07 thành công và chạy lại không tạo trùng. Kiểm tra dữ liệu/ràng buộc (04), toàn bộ 11 quan hệ (05), và tạo mới 01+02 trong database thử độc lập: đạt. Không có lớp gán giáo viên sai ngôn ngữ. Database thử đã được gỡ sau kiểm tra.
+- Dữ liệu cloud chưa được thay đổi trong lần cập nhật này. Bản local chạy tại `http://127.0.0.1:5173`; mã nguồn và bộ SQL đã cập nhật trong workspace.
+
+## Lịch sử ngày 09/10/2026
 
 ## Website công khai trên Render + Neon
 

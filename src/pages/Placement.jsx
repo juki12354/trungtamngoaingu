@@ -14,9 +14,16 @@ import {
   PageHeading,
   ErrorMessage,
   Loading,
+  LanguageSelect,
+  languageName,
 } from "../lib";
 export function Placement() {
-  const { data: preview, error: loadError, reload } = useLoad("/questions");
+  const [language, setLanguage] = useState("en");
+  const {
+    data: preview,
+    error: loadError,
+    reload,
+  } = useLoad(`/questions?language=${language}`);
   const [attempt, setAttempt] = useState(null);
   const questions = attempt?.questions || preview;
   const { catalog } = useApp();
@@ -68,7 +75,7 @@ export function Placement() {
     try {
       const value = await api("/placement/attempts", {
         method: "POST",
-        body: {},
+        body: { language },
       });
       setAttempt(value);
       setAnswers({});
@@ -97,6 +104,7 @@ export function Placement() {
               <GraduationCap size={36} />
             </span>
             <span className="eyebrow">BẠN ĐÃ HOÀN THÀNH BÀI KIỂM TRA</span>
+            <p>{languageName(result.language)}</p>
             <h2>Thêm một bước hiểu chính mình!</h2>
             <div className="score">
               {result.score}
@@ -104,9 +112,10 @@ export function Placement() {
             </div>
             <span className="badge">Mức tham khảo: {result.level}</span>
             <p>
-              Đây là bài sàng lọc ngữ pháp và từ vựng, không phải kết quả CEFR
-              chính thức. Cần đánh giá thêm nghe, nói và viết để xếp lớp chính
-              xác.
+              {language === "en"
+                ? "Đây là bài sàng lọc ngữ pháp và từ vựng, không phải kết quả CEFR chính thức."
+                : "Bài khảo sát 10 từ vựng cơ bản chỉ giúp chọn điểm bắt đầu; không quy đổi sang CEFR, HSK, TOPIK hoặc JLPT."}{" "}
+              Cần trao đổi thêm với giáo viên để xếp lớp.
             </p>
             {suggested && (
               <div className="recommendation">
@@ -137,6 +146,15 @@ export function Placement() {
           </div>
         ) : !started ? (
           <div className="form-panel test-intro">
+            <LanguageSelect
+              label="Ngôn ngữ kiểm tra"
+              all={false}
+              value={language}
+              onChange={(v) => {
+                setLanguage(v);
+                setError("");
+              }}
+            />
             <ClipboardCheck size={52} />
             <h2>Sẵn sàng khám phá trình độ của bạn?</h2>
             <p>Không áp lực điểm số. Hãy chọn đáp án bạn thấy phù hợp nhất.</p>

@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import pg from "pg";
 import { openDatabase } from "./db.js";
 import { addClassOptions } from "../scripts/add-class-options.mjs";
+import { addMultilingual } from "./multilingual.js";
 
 // Keep the existing SQLite SQL/API names at the database boundary. Quoted
 // strings and identifiers are tokens, so question marks inside text stay intact.
@@ -174,6 +175,14 @@ export async function connectDatabase({
           }
         }
       });
+    } catch (error) {
+      await db.close();
+      throw error;
+    }
+  }
+  if (initialize) {
+    try {
+      await db.transaction(() => addMultilingual(db));
     } catch (error) {
       await db.close();
       throw error;

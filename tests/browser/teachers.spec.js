@@ -7,9 +7,9 @@ test("teacher profiles display achievements and admin edits appear publicly", as
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/giao-vien");
-  await expect(page.locator("article.teacher-card")).toHaveCount(9);
+  await expect(page.locator("article.teacher-card")).toHaveCount(24);
   await expect(
-    page.getByText("9 hồ sơ giáo viên minh họa.", { exact: false }),
+    page.getByText("24 hồ sơ giáo viên minh họa.", { exact: false }),
   ).toBeVisible();
   await page
     .getByRole("heading", { name: "Lê Hoàng Nam", exact: true })

@@ -1,5 +1,35 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { languages, languageName } from "../shared/languages.js";
+export { languageName };
+export function LanguageSelect({
+  value,
+  onChange,
+  label = "Ngôn ngữ",
+  all = true,
+  name,
+  disabled = false,
+}) {
+  return (
+    <label className="language-filter">
+      {label}
+      <select
+        aria-label={label}
+        name={name}
+        value={value}
+        onChange={(e) => onChange?.(e.target.value)}
+        disabled={disabled}
+      >
+        {all && <option value="">Tất cả ngôn ngữ</option>}
+        {languages.map((l) => (
+          <option key={l.code} value={l.code}>
+            {l.name}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
 import {
   ArrowUpRight,
   Clock3,
@@ -127,6 +157,9 @@ export function CourseCard({ course }) {
         </span>
       </Link>
       <div className="course-body">
+        <span className="language-label">
+          {languageName(course.language || "en")}
+        </span>
         <div className="course-meta">
           {course.audience}
           <span>•</span>

@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { campuses } from "./campuses.js";
+import { languageCodes } from "../shared/languages.js";
+const language = z.enum(languageCodes).default("en");
 const text = z.string().trim().min(1, "Vui lòng điền đủ thông tin.").max(500);
 const long = z.string().trim().min(1).max(20000);
 export const email = z
@@ -73,6 +75,7 @@ export const changePassword = z.object({
 });
 export const schemas = {
   courses: z.object({
+    language,
     name: text,
     category: text,
     level: text,
@@ -85,6 +88,12 @@ export const schemas = {
     material: z.string().max(20000).default(""),
   }),
   teachers: z.object({
+    languages: z
+      .array(z.enum(languageCodes))
+      .min(1)
+      .max(languageCodes.length)
+      .refine((v) => new Set(v).size === v.length, "Ngôn ngữ bị trùng.")
+      .default(["en"]),
     name: text,
     nationality: z.string().trim().max(80).default(""),
     degree: text,
@@ -132,6 +141,7 @@ export const schemas = {
     content: long,
   }),
   questions: z.object({
+    language,
     prompt: text,
     options: z.array(text).length(4),
     answer: z.number().int().min(0).max(3),

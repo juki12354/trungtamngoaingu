@@ -28,7 +28,7 @@ import { Enrollment, Placement, Login, Student } from "./pages/AccountPages";
 import Admin from "./pages/Admin";
 const links = [
   ["/", "Trang chủ"],
-  ["/gioi-thieu", "Về Vinh English"],
+  ["/gioi-thieu", "Về trung tâm"],
   ["/khoa-hoc", "Khóa học"],
   ["/giao-vien", "Giáo viên"],
   ["/lich-khai-giang", "Lịch khai giảng"],
@@ -36,12 +36,12 @@ const links = [
 ];
 function Logo() {
   return (
-    <Link to="/" className="logo" aria-label="Vinh English Center — Trang chủ">
+    <Link to="/" className="logo" aria-label="Vinh Language Center — Trang chủ">
       <span className="logo-mark">
         v<span>•</span>
       </span>
       <span>
-        vinh<span className="logo-english">english</span>
+        vinh<span className="logo-english">languages</span>
         <small>LEARN. CONNECT. GROW.</small>
       </span>
     </Link>
@@ -159,7 +159,7 @@ function Layout({ user, logout, children }) {
           </div>
           <div>
             <h3>Khám phá</h3>
-            <Link to="/gioi-thieu">Về Vinh English</Link>
+            <Link to="/gioi-thieu">Về trung tâm</Link>
             <Link to="/khoa-hoc">Chương trình học</Link>
             <Link to="/giao-vien">Đội ngũ giáo viên</Link>
             <Link to="/tin-tuc">Góc học tập</Link>
@@ -175,7 +175,7 @@ function Layout({ user, logout, children }) {
             <Link to="/lien-he">Liên hệ & tư vấn</Link>
           </div>
           <div>
-            <h3>Ghé thăm Vinh English</h3>
+            <h3>Ghé thăm Vinh Languages</h3>
             <p>
               <MapPin size={16} /> 28 Lê Lợi, TP. Vinh, Nghệ An
             </p>
@@ -191,7 +191,7 @@ function Layout({ user, logout, children }) {
           </div>
         </div>
         <div className="container footer-bottom">
-          <span>© 2026 Vinh English Center. Made for learning.</span>
+          <span>© 2026 Vinh Language Center. Made for learning.</span>
           <span>
             <GraduationCap size={16} />
             Học hôm nay. Vững ngày mai.

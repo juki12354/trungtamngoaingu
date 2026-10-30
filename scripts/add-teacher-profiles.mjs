@@ -26,7 +26,11 @@ export function addTeacherProfiles(db) {
         columns = Object.keys(data);
       db.prepare(
         `INSERT INTO teachers(${columns.join(",")}) VALUES(${columns.map(() => "?").join(",")})`,
-      ).run(...columns.map((key) => data[key]));
+      ).run(
+        ...columns.map((key) =>
+          typeof data[key] === "object" ? JSON.stringify(data[key]) : data[key],
+        ),
+      );
       result.added++;
     }
     db.exec("COMMIT");
