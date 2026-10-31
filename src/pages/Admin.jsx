@@ -39,6 +39,7 @@ import {
   statusText,
 } from "../lib";
 import { languages, languageName } from "../../shared/languages.js";
+import { proficiencyFor, skillLabels } from "../../shared/proficiency.js";
 const resources = [
   ["overview", "Tổng quan", LayoutDashboard],
   ["courses", "Khóa học", BookOpen],
@@ -56,6 +57,7 @@ const resources = [
 const fields = {
   courses: [
     ["language", "Ngôn ngữ", "language"],
+    ["levelCode", "Cấp độ xếp lớp", "levelCode"],
     ["name", "Tên khóa học"],
     ["category", "Nhóm chương trình"],
     ["level", "Trình độ"],
@@ -108,6 +110,9 @@ const fields = {
   ],
   questions: [
     ["language", "Ngôn ngữ bài kiểm tra", "language"],
+    ["assessment", "Loại bài kiểm tra", "assessment"],
+    ["levelCode", "Nhóm cấp độ", "levelCode"],
+    ["skill", "Kỹ năng", "skill"],
     ["prompt", "Câu hỏi"],
     ["option0", "Đáp án A"],
     ["option1", "Đáp án B"],
@@ -153,7 +158,13 @@ const defaults = {
     category: "Góc học tập",
     image: "/images/ielts.jpg",
   },
-  questions: { answer: 0, language: "en" },
+  questions: {
+    answer: 0,
+    language: "en",
+    assessment: "competency",
+    skill: "vocabulary",
+    levelCode: "A1",
+  },
 };
 export default function Admin() {
   const { user } = useApp();
@@ -682,6 +693,9 @@ function EditDialog({ resource, item, onClose, onSaved }) {
   const dialog = useRef(null);
   const { catalog } = useApp();
   const [selectedCourse, setSelectedCourse] = useState(item.courseId || "");
+  const [selectedLanguage, setSelectedLanguage] = useState(
+    item.language || "en",
+  );
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -793,46 +807,71 @@ function EditDialog({ resource, item, onClose, onSaved }) {
                 "note",
                 "achievements",
                 "nationality",
+                "levelCode",
               ].includes(key) &&
               type !== "grade" &&
               type !== "students" &&
               !(key === "password" && item.id);
             let options =
-              type === "language"
-                ? languages.map((l) => ({ id: l.code, name: l.name }))
-                : type === "courses"
-                  ? catalog.courses
-                  : type === "teachers"
-                    ? catalog.teachers.filter(
-                        (t) =>
-                          !selectedCourse ||
-                          t.languages.includes(
-                            catalog.courses.find(
-                              (c) => c.id === Number(selectedCourse),
-                            )?.language,
-                          ),
-                      )
-                    : type === "classStatus"
-                      ? Object.entries(classStatuses).map(([id, name]) => ({
-                          id,
-                          name,
-                        }))
-                      : type === "contactStatus"
-                        ? Object.entries(contactStatuses).map(([id, name]) => ({
-                            id,
-                            name,
-                          }))
-                        : type === "status"
-                          ? Object.entries(statusText).map(([id, name]) => ({
-                              id,
-                              name,
-                            }))
-                          : type === "answer"
-                            ? ["A", "B", "C", "D"].map((name, id) => ({
-                                id,
-                                name,
-                              }))
-                            : null;
+              type === "levelCode"
+                ? proficiencyFor(selectedLanguage).levels.map((l) => ({
+                    id: l.code,
+                    name: l.label,
+                  }))
+                : type === "skill"
+                  ? Object.entries(skillLabels).map(([id, name]) => ({
+                      id,
+                      name,
+                    }))
+                  : type === "assessment"
+                    ? [
+                        {
+                          id: "competency",
+                          name: "Kiểm tra năng lực theo cấp độ",
+                        },
+                        { id: "legacy", name: "Bài khảo sát cũ" },
+                      ]
+                    : type === "language"
+                      ? languages.map((l) => ({ id: l.code, name: l.name }))
+                      : type === "courses"
+                        ? catalog.courses
+                        : type === "teachers"
+                          ? catalog.teachers.filter(
+                              (t) =>
+                                !selectedCourse ||
+                                t.languages.includes(
+                                  catalog.courses.find(
+                                    (c) => c.id === Number(selectedCourse),
+                                  )?.language,
+                                ),
+                            )
+                          : type === "classStatus"
+                            ? Object.entries(classStatuses).map(
+                                ([id, name]) => ({
+                                  id,
+                                  name,
+                                }),
+                              )
+                            : type === "contactStatus"
+                              ? Object.entries(contactStatuses).map(
+                                  ([id, name]) => ({
+                                    id,
+                                    name,
+                                  }),
+                                )
+                              : type === "status"
+                                ? Object.entries(statusText).map(
+                                    ([id, name]) => ({
+                                      id,
+                                      name,
+                                    }),
+                                  )
+                                : type === "answer"
+                                  ? ["A", "B", "C", "D"].map((name, id) => ({
+                                      id,
+                                      name,
+                                    }))
+                                  : null;
             if (type === "languages")
               return (
                 <fieldset className="span-two language-options" key={key}>
@@ -858,13 +897,21 @@ function EditDialog({ resource, item, onClose, onSaved }) {
                   {options ? (
                     <select
                       aria-label={label + (required ? " *" : "")}
-                      key={type === "teachers" ? selectedCourse : key}
+                      key={
+                        type === "teachers"
+                          ? selectedCourse
+                          : type === "levelCode"
+                            ? selectedLanguage
+                            : key
+                      }
                       name={key}
                       defaultValue={value ?? ""}
                       onChange={
-                        type === "courses"
-                          ? (e) => setSelectedCourse(e.target.value)
-                          : undefined
+                        type === "language"
+                          ? (e) => setSelectedLanguage(e.target.value)
+                          : type === "courses"
+                            ? (e) => setSelectedCourse(e.target.value)
+                            : undefined
                       }
                       required={required}
                     >

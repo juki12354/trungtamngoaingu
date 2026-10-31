@@ -42,6 +42,7 @@ BEGIN TRY
     CREATE TABLE dbo.courses (
         id int IDENTITY(1,1) CONSTRAINT PK_courses PRIMARY KEY,
         language varchar(8) NOT NULL DEFAULT 'en',
+        levelCode varchar(20) NOT NULL DEFAULT '',
         name nvarchar(500) NOT NULL,
         category nvarchar(100) NOT NULL,
         level nvarchar(100) NOT NULL,
@@ -112,6 +113,9 @@ BEGIN TRY
     CREATE TABLE dbo.questions (
         id int IDENTITY(1,1) CONSTRAINT PK_questions PRIMARY KEY,
         language varchar(8) NOT NULL DEFAULT 'en',
+        levelCode varchar(20) NOT NULL DEFAULT '',
+        skill varchar(20) NOT NULL DEFAULT 'vocabulary',
+        assessment varchar(20) NOT NULL DEFAULT 'legacy',
         prompt nvarchar(500) NOT NULL,
         options nvarchar(max) NOT NULL,
         answer tinyint NOT NULL, -- zero-based index, 0..3
@@ -128,6 +132,7 @@ BEGIN TRY
         level nvarchar(50) NOT NULL,
         createdAt datetime2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
         review nvarchar(max) NOT NULL DEFAULT N'[]',
+        analysis nvarchar(max) NOT NULL DEFAULT N'{}' CONSTRAINT CK_results_analysis CHECK(ISJSON(analysis)=1),
         CONSTRAINT CK_results_score CHECK (total > 0 AND score BETWEEN 0 AND total),
         CONSTRAINT CK_results_review CHECK (ISJSON(review)=1 AND LEFT(LTRIM(review),1)=N'[')
     );
@@ -168,6 +173,7 @@ BEGIN TRY
     CREATE TABLE dbo.placement_attempts (
         token varchar(128) CONSTRAINT PK_placement_attempts PRIMARY KEY,
         language varchar(8) NOT NULL DEFAULT 'en',
+        assessment varchar(20) NOT NULL DEFAULT 'legacy',
         userId int NULL CONSTRAINT FK_attempts_users REFERENCES dbo.users(id),
         questions nvarchar(max) NOT NULL,
         expires bigint NOT NULL, -- Unix epoch milliseconds, matches Node.js
@@ -224,6 +230,7 @@ BEGIN TRY
                cl.startDate AS NgayBatDau, cl.endDate AS NgayKetThuc,
                cl.weekdays AS ThuHoc, cl.startTime AS GioBatDau, cl.endTime AS GioKetThuc,
                cl.capacity AS SiSoToiDa, c.tuition AS HocPhi, cl.status AS TrangThai,
+               c.language AS NgonNgu, c.levelCode AS CapDo,
                (SELECT COUNT(*) FROM dbo.enrollments e WHERE e.classId=cl.id AND e.status=''confirmed'') AS DaXacNhan
         FROM dbo.classes cl JOIN dbo.courses c ON c.id=cl.courseId
         JOIN dbo.teachers t ON t.id=cl.teacherId;');

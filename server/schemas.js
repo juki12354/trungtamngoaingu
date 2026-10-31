@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { campuses } from "./campuses.js";
 import { languageCodes } from "../shared/languages.js";
+import { proficiencyFor } from "../shared/proficiency.js";
+const levelCode = z.string().max(20).default("");
 const language = z.enum(languageCodes).default("en");
 const text = z.string().trim().min(1, "Vui lòng điền đủ thông tin.").max(500);
 const long = z.string().trim().min(1).max(20000);
@@ -74,19 +76,27 @@ export const changePassword = z.object({
     .max(128),
 });
 export const schemas = {
-  courses: z.object({
-    language,
-    name: text,
-    category: text,
-    level: text,
-    duration: z.number().int().min(1).max(104),
-    tuition: z.number().int().min(0).max(100000000),
-    lessons: z.number().int().min(1).max(500),
-    audience: text,
-    image,
-    description: long,
-    material: z.string().max(20000).default(""),
-  }),
+  courses: z
+    .object({
+      levelCode,
+      language,
+      name: text,
+      category: text,
+      level: text,
+      duration: z.number().int().min(1).max(104),
+      tuition: z.number().int().min(0).max(100000000),
+      lessons: z.number().int().min(1).max(500),
+      audience: text,
+      image,
+      description: long,
+      material: z.string().max(20000).default(""),
+    })
+    .refine(
+      (c) =>
+        !c.levelCode ||
+        proficiencyFor(c.language).levels.some((l) => l.code === c.levelCode),
+      "Cấp độ không thuộc ngôn ngữ đã chọn.",
+    ),
   teachers: z.object({
     languages: z
       .array(z.enum(languageCodes))
@@ -140,12 +150,22 @@ export const schemas = {
     excerpt: text,
     content: long,
   }),
-  questions: z.object({
-    language,
-    prompt: text,
-    options: z.array(text).length(4),
-    answer: z.number().int().min(0).max(3),
-  }),
+  questions: z
+    .object({
+      levelCode,
+      skill: z.enum(["vocabulary", "grammar", "reading"]).default("vocabulary"),
+      assessment: z.enum(["legacy", "competency"]).default("legacy"),
+      language,
+      prompt: text,
+      options: z.array(text).length(4),
+      answer: z.number().int().min(0).max(3),
+    })
+    .refine(
+      (q) =>
+        q.assessment === "legacy" ||
+        proficiencyFor(q.language).levels.some((l) => l.code === q.levelCode),
+      "Hãy chọn cấp độ hợp lệ cho bài kiểm tra năng lực.",
+    ),
   students: register,
   contacts: z.object({
     status: z.enum(["new", "contacted", "done"]),

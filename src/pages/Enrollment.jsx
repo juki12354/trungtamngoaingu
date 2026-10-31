@@ -238,7 +238,7 @@ export function Enrollment() {
               </div>
             </li>
           </ol>
-          <Link className="text-link" to="/kiem-tra">
+          <Link className="text-link" to={`/kiem-tra?language=${language}`}>
             Chưa rõ trình độ? Làm bài test
             <ArrowRight size={16} />
           </Link>

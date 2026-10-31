@@ -27,6 +27,7 @@ import {
   languageName,
 } from "../lib";
 import { ConsultationForm } from "./DiscoveryPages";
+import { proficiencyFor } from "../../shared/proficiency.js";
 export function Courses() {
   const { catalog } = useApp();
   const [params, setParams] = useSearchParams();
@@ -41,6 +42,7 @@ export function Courses() {
     (c) =>
       (category === "Tất cả" || c.category === category) &&
       (!params.get("language") || c.language === params.get("language")) &&
+      (!params.get("level") || c.levelCode === params.get("level")) &&
       `${c.name} ${c.description}`
         .toLocaleLowerCase("vi")
         .includes(q.toLocaleLowerCase("vi")),
@@ -57,8 +59,30 @@ export function Courses() {
         <div className="catalog-toolbar">
           <LanguageSelect
             value={params.get("language") || ""}
-            onChange={(v) => set("language", v)}
+            onChange={(v) => {
+              const next = new URLSearchParams(params);
+              next.delete("level");
+              v ? next.set("language", v) : next.delete("language");
+              setParams(next, { replace: true });
+            }}
           />
+          {params.get("language") && (
+            <label className="language-filter">
+              Cấp độ
+              <select
+                aria-label="Cấp độ"
+                value={params.get("level") || ""}
+                onChange={(e) => set("level", e.target.value)}
+              >
+                <option value="">Tất cả cấp độ</option>
+                {proficiencyFor(params.get("language")).levels.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="search-box">
             <Search size={20} />
             <input
@@ -176,16 +200,19 @@ export function CourseDetail() {
             <div>
               <dt>
                 <Compass size={17} />
-                Trình độ
+                Cấp độ khóa học
               </dt>
-              <dd>{c.level}</dd>
+              <dd>{c.levelCode || c.level}</dd>
             </div>
           </dl>
           <Link className="button full" to={`/dang-ky?course=${c.id}`}>
             Đăng ký khóa học
             <ArrowRight size={18} />
           </Link>
-          <Link className="button outline full" to="/kiem-tra">
+          <Link
+            className="button outline full"
+            to={`/kiem-tra?language=${c.language}`}
+          >
             Kiểm tra trình độ miễn phí
           </Link>
           <p className="muted small-text">

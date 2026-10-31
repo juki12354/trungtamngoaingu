@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { languages } from "../../shared/languages.js";
+import { proficiencyFor } from "../../shared/proficiency.js";
 
 test("language filters cover all languages, teachers, schedules and registration", async ({
   page,
@@ -13,7 +14,7 @@ test("language filters cover all languages, teachers, schedules and registration
       .getByLabel("Ngôn ngữ", { exact: true })
       .selectOption(language.code);
     await expect(page.locator(".course-card")).toHaveCount(
-      language.code === "en" ? 7 : 2,
+      language.code === "en" ? 9 : proficiencyFor(language.code).levels.length,
     );
     await expect(page).toHaveURL(new RegExp(`language=${language.code}`));
   }
@@ -43,11 +44,11 @@ test("language filters cover all languages, teachers, schedules and registration
     page.getByRole("heading", { name: "Phạm Nhật Minh" }),
   ).toBeVisible();
   await page.goto("/lich-khai-giang?language=ko");
-  await expect(page.getByRole("status")).toHaveText("Tìm thấy 6 lớp học");
+  await expect(page.getByRole("status")).toHaveText("Tìm thấy 18 lớp học");
   await page
     .getByRole("combobox", { name: "Ca học", exact: true })
     .selectOption("evening");
-  await expect(page.getByRole("status")).toHaveText("Tìm thấy 2 lớp học");
+  await expect(page.getByRole("status")).toHaveText("Tìm thấy 8 lớp học");
   await page.goto("/dang-ky");
   await page.getByLabel("Ngôn ngữ muốn học").selectOption("de");
   await expect(page.getByLabel("Khóa học *")).toContainText(
@@ -75,19 +76,19 @@ test("Korean placement and multilingual roadmaps suggest the selected language",
   await page.goto("/kiem-tra");
   await page.getByLabel("Ngôn ngữ kiểm tra").selectOption("ko");
   await expect(page.locator(".test-facts")).toContainText(
-    "10Câu hỏi trắc nghiệm",
+    "18Câu hỏi trắc nghiệm",
   );
   await page.getByRole("button", { name: "Bắt đầu kiểm tra" }).click();
-  for (let n = 0; n < 10; n++) {
-    await expect(page.locator("legend")).toContainText("Tiếng Hàn");
+  for (let n = 0; n < 18; n++) {
+    await expect(page.locator(".quiz > .badge")).toContainText("Tiếng Hàn");
     await page.getByRole("radio").first().check();
-    if (n < 9)
+    if (n < 17)
       await page.getByRole("button", { name: "Câu tiếp theo" }).click();
   }
   await page.getByRole("button", { name: "Nộp bài & xem kết quả" }).click();
   await expect(page.locator(".recommendation h3")).toContainText("Tiếng Hàn");
   await expect(page.locator(".test-result")).toContainText(
-    "không quy đổi sang CEFR",
+    "không thay thế chứng chỉ",
   );
   await page.goto("/lo-trinh");
   await page.getByLabel("Ngôn ngữ lộ trình").selectOption("it");
@@ -107,7 +108,7 @@ test("admin manages course languages and multilingual teacher profiles", async (
   await expect(page).toHaveURL(/admin/);
   await page.getByRole("button", { name: "Khóa học", exact: true }).click();
   await page.getByLabel("Ngôn ngữ quản lý").selectOption("fr");
-  await expect(page.locator(".admin-table tbody tr")).toHaveCount(2);
+  await expect(page.locator(".admin-table tbody tr")).toHaveCount(6);
   await page
     .getByRole("button", { name: /Sửa bản ghi/ })
     .first()

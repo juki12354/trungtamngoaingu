@@ -2,6 +2,12 @@ import { mutation } from "./mutation.js";
 import { createHash, randomBytes } from "node:crypto";
 import { fail } from "./domain.js";
 import { languageCodes } from "../shared/languages.js";
+import {
+  evaluateCompetency,
+  proficiencyFor,
+  skillLabels,
+} from "../shared/proficiency.js";
+import { recommendClasses } from "./placement-recommendations.js";
 const digest = (token) => createHash("sha256").update(token).digest("hex");
 export function mountPlacement(app, { db, submitLimit, all, write }) {
   app.post(
@@ -9,13 +15,44 @@ export function mountPlacement(app, { db, submitLimit, all, write }) {
     submitLimit,
     mutation(db, async (req, _res) => {
       const language = req.body?.language || "en";
+      const assessment = req.body?.assessment || "legacy";
+      if (!["legacy", "competency"].includes(assessment))
+        throw fail(400, "Loại bài kiểm tra không hợp lệ.");
       if (!languageCodes.includes(language))
         throw fail(400, "Ngôn ngữ không hợp lệ.");
       const questions = (await all("questions"))
         .reverse()
-        .filter((q) => q.language === language);
+        .filter((q) => q.language === language && q.assessment === assessment);
       if (!questions.length)
         throw fail(409, "Bài kiểm tra đang được cập nhật.");
+      if (assessment === "competency") {
+        const { levels } = proficiencyFor(language),
+          skills = Object.keys(skillLabels);
+        if (
+          levels.some((l) =>
+            skills.some(
+              (s) =>
+                !questions.some((q) => q.levelCode === l.code && q.skill === s),
+            ),
+          ) ||
+          questions.some(
+            (q) =>
+              !levels.some((l) => l.code === q.levelCode) ||
+              !skills.includes(q.skill),
+          )
+        )
+          throw fail(
+            409,
+            "Bộ đề năng lực chưa đủ cấp độ và kỹ năng. Vui lòng quay lại sau hoặc liên hệ tư vấn.",
+          );
+        questions.sort(
+          (a, b) =>
+            levels.findIndex((l) => l.code === a.levelCode) -
+              levels.findIndex((l) => l.code === b.levelCode) ||
+            skills.indexOf(a.skill) - skills.indexOf(b.skill) ||
+            a.id - b.id,
+        );
+      }
       await db
         .prepare("DELETE FROM placement_attempts WHERE expires < ?")
         .run(Date.now() - 86400000);
@@ -23,7 +60,7 @@ export function mountPlacement(app, { db, submitLimit, all, write }) {
         expiresAt = Date.now() + 30 * 60 * 1000;
       await db
         .prepare(
-          "INSERT INTO placement_attempts(token,userId,questions,expires,language) VALUES (?,?,?,?,?)",
+          "INSERT INTO placement_attempts(token,userId,questions,expires,language,assessment) VALUES (?,?,?,?,?,?)",
         )
         .run(
           digest(token),
@@ -31,6 +68,7 @@ export function mountPlacement(app, { db, submitLimit, all, write }) {
           JSON.stringify(questions),
           expiresAt,
           language,
+          assessment,
         );
       return {
         status: 201,
@@ -38,6 +76,7 @@ export function mountPlacement(app, { db, submitLimit, all, write }) {
           token,
           expiresAt,
           language,
+          assessment,
           questions: questions.map(({ answer, ...q }) => q),
         },
       };
@@ -59,7 +98,7 @@ export function mountPlacement(app, { db, submitLimit, all, write }) {
       if (attempt.result)
         return {
           status: 200,
-          body: JSON.parse(attempt.result),
+          body: await refreshResult(JSON.parse(attempt.result)),
         };
       if (attempt.expires < Date.now())
         throw fail(
@@ -83,6 +122,40 @@ export function mountPlacement(app, { db, submitLimit, all, write }) {
       const score = questions.filter((q) => q.answer === answers[q.id]).length,
         ratio = score / questions.length;
       const language = attempt.language || "en";
+      if (attempt.assessment === "competency") {
+        const analysis = evaluateCompetency(language, questions, answers);
+        const review = questions.map((q) => ({
+          id: q.id,
+          prompt: q.prompt,
+          options: q.options,
+          answer: q.answer,
+          selected: answers[q.id],
+          skill: q.skill,
+          levelCode: q.levelCode,
+        }));
+        const id = await write("placement_results", {
+          userId: attempt.userId,
+          language,
+          score,
+          total: questions.length,
+          level: analysis.level,
+          review,
+          analysis,
+        });
+        const result = await refreshResult({
+          id,
+          score,
+          total: questions.length,
+          language,
+          level: analysis.level,
+          review,
+          analysis,
+        });
+        await db
+          .prepare("UPDATE placement_attempts SET result=? WHERE token=?")
+          .run(JSON.stringify(result), digest(token));
+        return { status: 200, body: result };
+      }
       const level =
         language === "en"
           ? ratio < 0.4
@@ -149,4 +222,13 @@ export function mountPlacement(app, { db, submitLimit, all, write }) {
       };
     }),
   );
+  async function refreshResult(result) {
+    if (result.analysis?.version !== "competency-v1") return result;
+    const recommendations = await recommendClasses(
+      db,
+      result.language,
+      result.analysis.recommendedLevel,
+    );
+    return { ...result, courseId: recommendations.courseId, recommendations };
+  }
 }

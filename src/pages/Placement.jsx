@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { proficiencyFor, skillLabels } from "../../shared/proficiency.js";
+import { languageCodes } from "../../shared/languages.js";
 import {
   ArrowRight,
   ArrowLeft,
@@ -18,12 +20,17 @@ import {
   languageName,
 } from "../lib";
 export function Placement() {
-  const [language, setLanguage] = useState("en");
+  const [params] = useSearchParams();
+  const [language, setLanguage] = useState(
+    languageCodes.includes(params.get("language"))
+      ? params.get("language")
+      : "en",
+  );
   const {
     data: preview,
     error: loadError,
     reload,
-  } = useLoad(`/questions?language=${language}`);
+  } = useLoad(`/questions?language=${language}&assessment=competency`);
   const [attempt, setAttempt] = useState(null);
   const questions = attempt?.questions || preview;
   const { catalog } = useApp();
@@ -75,7 +82,7 @@ export function Placement() {
     try {
       const value = await api("/placement/attempts", {
         method: "POST",
-        body: { language },
+        body: { language, assessment: "competency" },
       });
       setAttempt(value);
       setAnswers({});
@@ -110,13 +117,13 @@ export function Placement() {
               {result.score}
               <span>/{result.total}</span>
             </div>
-            <span className="badge">Mức tham khảo: {result.level}</span>
+            <span className="badge">Gợi ý học: {result.level}</span>
             <p>
-              {language === "en"
-                ? "Đây là bài sàng lọc ngữ pháp và từ vựng, không phải kết quả CEFR chính thức."
-                : "Bài khảo sát 10 từ vựng cơ bản chỉ giúp chọn điểm bắt đầu; không quy đổi sang CEFR, HSK, TOPIK hoặc JLPT."}{" "}
-              Cần trao đổi thêm với giáo viên để xếp lớp.
+              Kết quả sàng lọc từ vựng, ngữ pháp và đọc hiểu để gợi ý lớp học,
+              không thay thế chứng chỉ hoặc đánh giá nghe, nói, viết của giáo
+              viên.
             </p>
+            <CompetencySummary analysis={result.analysis} />
             {suggested && (
               <div className="recommendation">
                 <span className="eyebrow">GỢI Ý CHO BẠN</span>
@@ -127,6 +134,53 @@ export function Placement() {
                   <ArrowRight size={18} />
                 </Link>
               </div>
+            )}
+            {result.recommendations && (
+              <section
+                className="recommended-classes"
+                aria-label="Lớp học được gợi ý"
+              >
+                <h3>Lớp phù hợp đang mở</h3>
+                <p>{result.recommendations.message}</p>
+                {result.recommendations.classes.map((cls) => (
+                  <article key={cls.id} className="recommended-class">
+                    <div>
+                      <strong>
+                        {cls.name} · {result.level}
+                      </strong>
+                      <p>{cls.schedule}</p>
+                      <p>
+                        {cls.campus} · {cls.teacherName} · Còn {cls.available}{" "}
+                        chỗ
+                      </p>
+                      <p>
+                        Khai giảng{" "}
+                        {new Date(
+                          `${cls.startDate}T00:00:00`,
+                        ).toLocaleDateString("vi-VN")}
+                      </p>
+                    </div>
+                    <Link
+                      className="button small"
+                      to={`/dang-ky?class=${cls.id}`}
+                    >
+                      Đăng ký lớp này <ArrowRight size={16} />
+                    </Link>
+                  </article>
+                ))}
+                {!result.recommendations.classes.length && (
+                  <Link
+                    className="button outline"
+                    to={
+                      result.courseId
+                        ? `/tu-van?course=${result.courseId}`
+                        : "/tu-van"
+                    }
+                  >
+                    Nhận tư vấn xếp lớp
+                  </Link>
+                )}
+              </section>
             )}
             <QuizReview review={result.review} />
             <button
@@ -156,6 +210,23 @@ export function Placement() {
               }}
             />
             <ClipboardCheck size={52} />
+            <div className="level-guide">
+              <h3>
+                Lộ trình {languageName(language)} ·{" "}
+                {proficiencyFor(language).standard}
+              </h3>
+              <div className="level-chips">
+                {proficiencyFor(language).levels.map((l) => (
+                  <span className="badge" key={l.code} title={l.description}>
+                    {l.label}
+                  </span>
+                ))}
+              </div>
+              <p>
+                Mỗi mức có câu hỏi từ vựng, ngữ pháp và đọc hiểu. Kết quả dùng
+                để chọn điểm bắt đầu trong lộ trình của trung tâm.
+              </p>
+            </div>
             <h2>Sẵn sàng khám phá trình độ của bạn?</h2>
             <p>Không áp lực điểm số. Hãy chọn đáp án bạn thấy phù hợp nhất.</p>
             <div className="test-facts">
@@ -163,15 +234,15 @@ export function Placement() {
                 <strong>{questions.length}</strong>Câu hỏi trắc nghiệm
               </span>
               <span>
-                <strong>10–15</strong>Phút dự kiến
+                <strong>15–25</strong>Phút dự kiến
               </span>
               <span>
                 <strong>Miễn phí</strong>Không cần đăng nhập
               </span>
             </div>
             <p className="muted">
-              Bài kiểm tra ngữ pháp và từ vựng chỉ mang tính tham khảo để gợi ý
-              khóa học.
+              Làm các câu từ nền tảng đến nâng cao. Hệ thống gợi ý đúng ngôn
+              ngữ, cấp độ và lớp còn chỗ dựa trên từng nhóm câu hỏi.
             </p>
             <ErrorMessage>{error}</ErrorMessage>
             <button className="button" disabled={busy} onClick={start}>
@@ -181,6 +252,10 @@ export function Placement() {
           </div>
         ) : (
           <div className="form-panel quiz">
+            <p className="badge">
+              {languageName(attempt.language)} · {q.levelCode} ·{" "}
+              {skillLabels[q.skill]}
+            </p>
             <p className="muted">
               Nộp trước{" "}
               {new Date(attempt.expiresAt).toLocaleTimeString("vi-VN")}.{" "}
@@ -286,4 +361,41 @@ export function QuizReview({ review = [] }) {
       </ol>
     </details>
   ) : null;
+}
+export function CompetencySummary({ analysis }) {
+  if (!analysis?.breakdown) return null;
+  return (
+    <section className="competency-summary" aria-label="Phân tích năng lực">
+      <h3>Nền tảng và hướng học tiếp</h3>
+      <p>
+        Nền tảng làm tốt: <strong>{analysis.foundationLevel}</strong>
+      </p>
+      <p>{analysis.reason}</p>
+      <div className="skill-results">
+        {analysis.skills.map((s) => (
+          <div key={s.skill}>
+            <span>
+              {s.label}:{" "}
+              <strong>
+                {s.correct}/{s.total}
+              </strong>
+            </span>
+            <progress aria-label={s.label} max={s.total} value={s.correct} />
+          </div>
+        ))}
+      </div>
+      <h4>Kết quả theo nhóm cấp độ</h4>
+      <div className="band-results">
+        {analysis.breakdown.map((b) => (
+          <div key={b.code}>
+            <strong>{b.label}</strong>
+            <span>
+              {b.correct}/{b.total} câu
+            </span>
+            <span>{b.passed ? "Làm tốt nhóm câu" : "Cần củng cố"}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }

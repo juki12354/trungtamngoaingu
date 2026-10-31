@@ -1,6 +1,6 @@
 # Database SQL Server — Trung tâm ngoại ngữ
 
-Bản SQL Server dựa trên 14 bảng thực tế của dự án Vinh Language Center. Bản cập nhật 30/10/2026 hỗ trợ **16 ngôn ngữ, 37 khóa học, 24 giáo viên, 116 lớp và 175 câu hỏi**. Có đầy đủ script tạo bảng, khóa chính/ngoại, dữ liệu mẫu và truy vấn để thực hành trong SQL Server Management Studio (SSMS).
+Bản SQL Server dựa trên 14 bảng thực tế của dự án Vinh Language Center. Bản cập nhật 31/10/2026 hỗ trợ **16 ngôn ngữ, 99 khóa học, 24 giáo viên, 302 lớp và 463 câu hỏi** (288 câu năng lực mới, 175 câu khảo sát cũ). Có đầy đủ script tạo bảng, khóa chính/ngoại, dữ liệu mẫu và truy vấn để thực hành trong SQL Server Management Studio (SSMS).
 
 ## Mở database đã tạo trên máy này
 
@@ -15,8 +15,8 @@ Bản SQL Server dựa trên 14 bảng thực tế của dự án Vinh Language 
 Cần SQL Server 2016 trở lên và SSMS, quyền tạo database. Mở từng file trong SSMS và chạy theo thứ tự:
 
 1. **`01-schema.sql`**: tạo database `TrungTamNgoaiNgu`, 14 bảng, các index và 3 view. File từ chối ghi đè nếu database đã có bảng.
-2. **`02-sample-data.sql`**: thêm 37 khóa, 24 giáo viên, 116 lớp nhiều ca, 175 câu hỏi, 3 bài viết, 2 tài khoản, 1 đăng ký và 1 yêu cầu tư vấn mẫu. Chạy lại file này sẽ bỏ qua dữ liệu đã nhập, giữ chỉnh sửa hiện có.
-3. **`03-queries.sql`**: 10 nhóm truy vấn minh họa, chỉ đọc dữ liệu.
+2. **`02-sample-data.sql`**: thêm 99 khóa, 24 giáo viên, 302 lớp nhiều ca, 463 câu hỏi, 3 bài viết, 2 tài khoản, 1 đăng ký và 1 yêu cầu tư vấn mẫu. Chạy lại file này sẽ bỏ qua dữ liệu đã nhập, giữ chỉnh sửa hiện có.
+3. **`03-queries.sql`**: 12 nhóm truy vấn minh họa, gồm lọc lớp theo ngôn ngữ/cấp độ, chỉ đọc dữ liệu.
 4. **`04-verify.sql`** (tùy chọn): kiểm tra trên dữ liệu mẫu; các lệnh thử sửa/thêm được rollback.
 5. **`05-verify-relationships.sql`** (tùy chọn): đối chiếu đủ 11 khóa ngoại, kiểu cột, cho phép NULL, hành vi xóa, bản ghi mồ côi và thử ghi/xóa sai liên kết. Tạo bản ghi thử riêng rồi rollback; không yêu cầu dữ liệu mẫu.
 
@@ -35,6 +35,12 @@ sqlcmd -S localhost -E -C -b -f 65001 -i database/sqlserver/03-queries.sql
 Sao lưu database, chạy **`06-multilingual-migration.sql`**, rồi **`07-multilingual-data.sql`**. Không chạy lại file `01` hoặc `02`. Hai file nâng cấp thêm cột còn thiếu và dữ liệu cho 15 ngôn ngữ mới, không dùng ID cố định và không ghi đè nội dung hiện có. Trên máy này đã sao lưu và nâng cấp database `TrungTamNgoaiNgu` thành công ngày 30/10/2026; 11 khóa ngoại vẫn hợp lệ.
 
 Các bảng `courses`, `questions`, `placement_attempts`, `placement_results` có cột `language` (mã `en`, `zh`, `ko`, `ja`…). `teachers.languages` chứa mảng JSON các mã ngôn ngữ giáo viên dạy. Ngôn ngữ của lớp được xác định qua khóa học, không lưu lặp thêm một cột trong lớp. Danh mục 16 mã dùng chung với ứng dụng nằm tại `shared/languages.js`.
+
+## Nâng cấp cấp độ và bài năng lực
+
+Database đã có 16 ngôn ngữ: sao lưu rồi chạy **`08-competency-migration.sql`**, **`09-competency-data.sql`**. Đã nâng cấp database trên máy này ngày 31/10/2026 và kiểm tra lại đủ 11 khóa ngoại. Cột `courses.levelCode` dùng để xếp lớp; `questions.levelCode/skill/assessment` phân loại đề; `placement_results.analysis` lưu JSON kết quả từng nhóm/kỹ năng; `placement_attempts.assessment` ghi loại lượt thi.
+
+View `vw_LichKhaiGiang` có thêm `NgonNgu`, `CapDo`. Xem [quy tắc xếp lớp và giới hạn bài kiểm tra](../../docs/COMPETENCY.md). Chấm bài và lọc lớp còn chỗ do backend thực hiện; script SQL không tự cấp chứng chỉ hoặc tự suy ra trình độ từ một tổng điểm.
 
 ## Các bảng và vai trò
 
@@ -97,7 +103,7 @@ Tài khoản mẫu trong bản SQL Server: `admin@vinhenglish.vn` / `Admin@12345
 ## Kiểm tra thực tế
 
 - Tạo schema và nhập mẫu trên SQL Server 2022 thành công.
-- 14 bảng, 3 view; số bản ghi khóa/giáo viên/lớp/câu hỏi sau nâng cấp là 37/24/116/175, gồm 16 ngôn ngữ.
+- 14 bảng, 3 view; số bản ghi khóa/giáo viên/lớp/câu hỏi sau nâng cấp là 99/24/302/463, gồm 16 ngôn ngữ. Trong đó có 288 câu năng lực, mỗi nhóm đủ từ vựng/ngữ pháp/đọc hiểu.
 - File kiểm tra có 12 tình huống dữ liệu sai phải bị từ chối và 1 tình huống cho phép đăng ký lại sau khi hủy; mọi thay đổi thử rollback.
 - Chạy lại file dữ liệu mẫu không thêm bản ghi trùng. Chạy lại file schema từ chối ghi đè.
 - Đối chiếu 11 khóa ngoại đang bật và được SQL Server tin cậy; không có bản ghi mồ côi. Thử ID sai ở đủ 11 liên kết, 4 trường hợp xóa bị chặn và 4 hành vi CASCADE/SET NULL: đạt. Xem [báo cáo quan hệ](RELATIONSHIP-REVIEW.md).

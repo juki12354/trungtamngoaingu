@@ -49,7 +49,7 @@ export async function assertScheduleAsync(db, cls, id) {
       .all(Number(id || 0), cls.endDate, cls.startDate),
   );
 }
-function checkSchedule(cls, candidates) {
+export function checkSchedule(cls, candidates) {
   if (
     !cls.weekdays.length ||
     !cls.startTime ||

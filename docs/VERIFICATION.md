@@ -1,4 +1,18 @@
-# Kết quả kiểm tra — 30/10/2026
+# Kết quả kiểm tra — 31/10/2026
+
+## Cấp độ và kiểm tra năng lực
+
+- 16 ngôn ngữ có mã và thứ tự cấp độ riêng. Catalog local trả 99 khóa, 96 nhóm cấp độ trong 16 lộ trình và 302 lớp; ngân hàng mới có 288 câu năng lực (15–21 câu/lượt), giữ 175 câu cũ.
+- SQLite: 50 bài API/regression đạt, 1 bài PostgreSQL bỏ qua có chủ đích. PostgreSQL 17 thật: 8 bài tập trung vào cấp độ, gợi ý lớp, snapshot, dữ liệu nâng cấp, transaction và chuyển SQLite→PostgreSQL đạt.
+- Kiểm tra từng ranh giới cấp độ của cả 16 ngôn ngữ; không vượt nền tảng yếu nhờ các câu khó đúng rời rạc. Bài bị thiếu một kỹ năng nhận lỗi 409. Không tin điểm/ngôn ngữ/cấp độ client gửi khi nộp.
+- Lớp hủy, kết thúc và đủ chỗ không xuất hiện trong gợi ý; hết lớp đúng cấp độ thì trả danh sách trống, giữ khóa phù hợp để tư vấn. Nộp lại giữ một kết quả và cập nhật tình trạng lớp hiện tại.
+- Chromium: 4 kịch bản đa ngôn ngữ/năng lực đạt trên SQLite và 4/4 đạt trên PostgreSQL (30,6 giây). Bộ trình duyệt đầy đủ trước đó có 14 kịch bản đạt, 1 phép đếm ca tối cần đổi từ 6 thành 8 sau khi bổ sung lịch; đã sửa và kiểm tra lại kịch bản đó thành công.
+- Luồng tiếng Trung làm tốt HSK 1–2 → gợi ý học HSK 3 → hiển thị điểm 3 kỹ năng và lớp còn chỗ → mở form đăng ký đúng classId: đạt. Bố cục kết quả 360/1440px không tràn ngang; Axe tự động không ghi nhận vi phạm trong phạm vi kiểm tra.
+- SQL Server: sao lưu trước 08/09; nâng cấp rồi chạy lại không trùng. Schema/data tạo mới độc lập, 11 khóa ngoại, các ràng buộc và 12 nhóm truy vấn đều chạy được. Kiểm tra 186 lớp mới theo cấp độ không trùng lịch giáo viên/phòng với database hiện có.
+- Bài kiểm tra là sàng lọc xếp lớp minh họa, chưa hiệu chuẩn năng lực chứng chỉ và chưa kiểm tra nghe/nói/viết. Xem [chính sách chấm bài](COMPETENCY.md).
+- Bản mới chạy local tại `http://127.0.0.1:5173/kiem-tra`. Không cập nhật Render trong lần thay đổi này.
+
+## Lịch sử ngày 30/10/2026
 
 ## Bản trung tâm đa ngôn ngữ
 

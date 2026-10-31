@@ -14,12 +14,13 @@ SET XACT_ABORT OFF;
 
 -- SSMS may add dbo.sysdiagrams when the user saves a database diagram.
 IF (SELECT COUNT(*) FROM sys.tables WHERE schema_id=SCHEMA_ID(N'dbo') AND is_ms_shipped=0 AND name<>N'sysdiagrams') <> 14 THROW 51100, 'Expected 14 application tables.', 1;
-IF (SELECT COUNT(*) FROM dbo.courses) <> 37 THROW 51100, 'Expected 37 courses.', 1;
+IF (SELECT COUNT(*) FROM dbo.courses) <> 99 THROW 51100, 'Expected 99 courses.', 1;
 IF (SELECT COUNT(*) FROM dbo.teachers) <> 24 THROW 51100, 'Expected 24 teachers.', 1;
-IF (SELECT COUNT(*) FROM dbo.classes) <> 116 THROW 51100, 'Expected 116 classes.', 1;
-IF (SELECT COUNT(*) FROM dbo.questions) <> 175 THROW 51100, 'Expected 175 questions.', 1;
+IF (SELECT COUNT(*) FROM dbo.classes) <> 302 THROW 51100, 'Expected 302 classes.', 1;
+IF (SELECT COUNT(*) FROM dbo.questions) <> 463 THROW 51100, 'Expected 463 questions.', 1;
+IF (SELECT COUNT(*) FROM dbo.questions WHERE assessment='competency') <> 288 THROW 51100, 'Expected 288 competency questions.', 1;
 IF (SELECT COUNT(DISTINCT language) FROM dbo.courses) <> 16 THROW 51100, 'Expected 16 languages.', 1;
-IF (SELECT COUNT(*) FROM dbo.vw_LichKhaiGiang) <> 116 THROW 51100, 'Schedule view mismatch.', 1;
+IF (SELECT COUNT(*) FROM dbo.vw_LichKhaiGiang) <> 302 THROW 51100, 'Schedule view mismatch.', 1;
 IF NOT EXISTS (SELECT 1 FROM dbo.teachers WHERE name=N'Nguyễn Minh Anh') THROW 51100, 'Unicode seed mismatch.', 1;
 
 -- Each test must reject the write, then rollback without changing sample data.

@@ -80,9 +80,9 @@ test("placement navigation, complete scoring, and course recommendation", async 
 }) => {
   await page.goto("/kiem-tra");
   await page.getByRole("button", { name: "Bắt đầu kiểm tra" }).click();
-  for (let i = 0; i < 25; i++) {
+  for (let i = 0; i < 18; i++) {
     await page.getByRole("radio").nth(1).check();
-    if (i < 24)
+    if (i < 17)
       await page.getByRole("button", { name: "Câu tiếp theo" }).click();
   }
   await page.getByRole("button", { name: "Nộp bài & xem kết quả" }).click();

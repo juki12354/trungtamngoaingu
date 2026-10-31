@@ -3,7 +3,7 @@ GO
 SET NOCOUNT ON;
 
 -- 1. Khóa học và học phí (VND).
-SELECT id AS MaKhoaHoc, name AS TenKhoaHoc, level AS TrinhDo,
+SELECT id AS MaKhoaHoc, name AS TenKhoaHoc, language AS NgonNgu, levelCode AS MaCapDo, level AS TrinhDo,
        duration AS SoTuan, lessons AS SoBuoi, tuition AS HocPhi
 FROM dbo.courses ORDER BY id;
 
@@ -56,4 +56,15 @@ FROM dbo.contacts WHERE status='new' ORDER BY createdAt DESC;
 SELECT q.id, q.prompt, o.[key] AS ThuTuLuaChon, o.value AS LuaChon
 FROM dbo.questions q CROSS APPLY OPENJSON(q.options) o
 ORDER BY q.id, CONVERT(int,o.[key]);
+GO
+
+-- 11. Lớp đúng ngôn ngữ/cấp độ đang tuyển sinh và còn chỗ.
+SELECT *,SiSoToiDa-DaXacNhan AS ChoConLai FROM dbo.vw_LichKhaiGiang
+WHERE NgonNgu='ja' AND CapDo='N3' AND TrangThai='enrolling'
+  AND NgayBatDau>CONVERT(date,GETDATE()) AND DaXacNhan<SiSoToiDa;
+
+-- 12. Cấu trúc ngân hàng kiểm tra năng lực; không lộ đáp án.
+SELECT language AS NgonNgu,levelCode AS CapDo,skill AS KyNang,COUNT(*) AS SoCau
+FROM dbo.questions WHERE assessment='competency'
+GROUP BY language,levelCode,skill ORDER BY language,levelCode,skill;
 GO

@@ -4,6 +4,7 @@ import pg from "pg";
 import { openDatabase } from "./db.js";
 import { addClassOptions } from "../scripts/add-class-options.mjs";
 import { addMultilingual } from "./multilingual.js";
+import { seedCompetency } from "./competency-seed.js";
 
 // Keep the existing SQLite SQL/API names at the database boundary. Quoted
 // strings and identifiers are tokens, so question marks inside text stay intact.
@@ -182,7 +183,10 @@ export async function connectDatabase({
   }
   if (initialize) {
     try {
-      await db.transaction(() => addMultilingual(db));
+      await db.transaction(async () => {
+        await addMultilingual(db);
+        await seedCompetency(db);
+      });
     } catch (error) {
       await db.close();
       throw error;

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { proficiencyFor } from "../../shared/proficiency.js";
 import { ArrowUpRight, MapPin, Phone } from "lucide-react";
 import {
   useApp,
@@ -411,6 +412,27 @@ export function Roadmap() {
               {p.name}
             </button>
           ))}
+        </div>
+        <div className="level-guide">
+          <h2>Cấp độ trong lộ trình {proficiencyFor(language).standard}</h2>
+          <div className="level-chips">
+            {proficiencyFor(language).levels.map((level) => (
+              <Link
+                className="badge"
+                key={level.code}
+                to={`/khoa-hoc?language=${language}&level=${level.code}`}
+                title={level.description}
+              >
+                {level.label}
+              </Link>
+            ))}
+          </div>
+          <p>
+            Chọn cấp độ để xem khóa học hoặc làm bài kiểm tra để nhận gợi ý lớp.
+          </p>
+          <Link className="text-link" to={`/kiem-tra?language=${language}`}>
+            Kiểm tra năng lực ngôn ngữ đã chọn
+          </Link>
         </div>
         <div className="roadmap-detail">
           <span className="eyebrow">{path.audience}</span>

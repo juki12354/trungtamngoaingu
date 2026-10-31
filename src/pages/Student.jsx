@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PasswordForm, WeeklySchedule } from "./ManagementPanels";
-import { QuizReview } from "./Placement";
+import { QuizReview, CompetencySummary } from "./Placement";
 import { downloadFile } from "../download";
 import { Link, Navigate } from "react-router-dom";
 import {
@@ -212,6 +212,7 @@ function StudentContent() {
                         <td>
                           {r.language ? `${r.language.toUpperCase()} · ` : ""}
                           {r.level}
+                          <CompetencySummary analysis={r.analysis} />
                           <QuizReview review={r.review} />
                         </td>
                       </tr>

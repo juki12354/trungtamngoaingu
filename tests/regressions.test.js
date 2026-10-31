@@ -220,7 +220,7 @@ test("placement attempts retain the original question snapshot and retrying subm
   const { request, admin, student } = await setup(t);
   const original = (
     await request("/admin/questions", "GET", null, admin)
-  ).body.filter((q) => q.language === "en");
+  ).body.filter((q) => q.language === "en" && q.assessment === "legacy");
   const started = await request("/placement/attempts", "POST", {}, student);
   assert.ok(
     [200, 201].includes(started.status),
@@ -279,7 +279,7 @@ test("placement attempts cannot be submitted with an invalid token or by another
   const { request, admin, student } = await setup(t);
   const original = (
     await request("/admin/questions", "GET", null, admin)
-  ).body.filter((q) => q.language === "en");
+  ).body.filter((q) => q.language === "en" && q.assessment === "legacy");
   const answers = Object.fromEntries(
     original.map((question) => [question.id, question.answer]),
   );

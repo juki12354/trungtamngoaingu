@@ -18,6 +18,7 @@ import {
 } from "./domain.js";
 import { mountPlacement } from "./placement.js";
 import { languages, languageCodes } from "../shared/languages.js";
+import { proficiencyFor } from "../shared/proficiency.js";
 import { campuses } from "./campuses.js";
 import { mountManagement } from "./management.js";
 const fail = (status, message) =>
@@ -30,7 +31,14 @@ const parseRow = (row) =>
   Object.fromEntries(
     Object.entries(row).map(([key, value]) => [
       key,
-      ["options", "grades", "weekdays", "review", "languages"].includes(key)
+      [
+        "options",
+        "grades",
+        "weekdays",
+        "review",
+        "languages",
+        "analysis",
+      ].includes(key)
         ? JSON.parse(value)
         : value,
     ]),
@@ -206,7 +214,7 @@ export async function createApp({
       classes: await classList(),
       news: (await all("news")).reverse(),
       campuses,
-      languages,
+      languages: languages.map((l) => ({ ...l, ...proficiencyFor(l.code) })),
     }),
   );
   app.get("/api/auth/me", (req, res) =>
@@ -340,12 +348,15 @@ export async function createApp({
   );
   app.get("/api/questions", async (req, res) => {
     const language = req.query.language || "en";
+    const assessment = req.query.assessment || "legacy";
+    if (!["legacy", "competency"].includes(assessment))
+      throw fail(400, "Loại bài kiểm tra không hợp lệ.");
     if (!languageCodes.includes(language))
       throw fail(400, "Ngôn ngữ không hợp lệ.");
     res.json(
       (await all("questions"))
         .reverse()
-        .filter((q) => q.language === language)
+        .filter((q) => q.language === language && q.assessment === assessment)
         .map(({ answer, ...q }) => q),
     );
   });

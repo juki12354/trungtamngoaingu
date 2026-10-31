@@ -4034,6 +4034,69 @@ td .text-link {
   font-weight: 700;
   margin: 4px 0 9px;
 }
+.level-guide,
+.competency-summary {
+  padding: 18px;
+  margin: 20px 0;
+  border-radius: 10px;
+  background: #f2f6ef;
+  text-align: left;
+}
+.level-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.skill-results {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.skill-results progress {
+  width: 100%;
+  accent-color: #17634d;
+}
+.band-results {
+  display: grid;
+  gap: 8px;
+}
+.band-results > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #dbe4d7;
+}
+.recommended-classes {
+  margin: 28px 0;
+  text-align: left;
+}
+.recommended-class {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid #dbe4d7;
+}
+.recommended-class p {
+  margin: 4px 0;
+}
+.quiz legend {
+  white-space: pre-line;
+}
+@media (max-width: 600px) {
+  .skill-results {
+    grid-template-columns: 1fr;
+  }
+  .recommended-class {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .band-results > div {
+    flex-wrap: wrap;
+  }
+}
 .language-tabs {
   flex-wrap: wrap;
 }

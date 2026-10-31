@@ -163,7 +163,7 @@ export function CourseCard({ course }) {
         <div className="course-meta">
           {course.audience}
           <span>•</span>
-          {course.level}
+          {course.levelCode || course.level}
         </div>
         <h3>
           <Link to={`/khoa-hoc/${course.id}`}>{course.name}</Link>

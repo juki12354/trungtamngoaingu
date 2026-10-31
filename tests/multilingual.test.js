@@ -53,7 +53,7 @@ test("upgrading an existing SQLite database preserves accounts, registrations an
       );
       assert.equal(
         (await db.prepare("SELECT count(*) n FROM courses").get()).n,
-        37,
+        99,
       );
       assert.equal(
         (await db.prepare("SELECT count(*) n FROM teachers").get()).n,
@@ -88,7 +88,7 @@ test("all 16 languages have courses, qualified teachers, non-overlapping schedul
   try {
     const catalog = (await call("/catalog")).data;
     assert.equal(catalog.languages.length, 16);
-    assert.equal(catalog.courses.length, 37);
+    assert.equal(catalog.courses.length, 99);
     assert.equal(catalog.teachers.length, 24);
     const admin = (
       await call("/auth/login", {
@@ -125,7 +125,9 @@ test("all 16 languages have courses, qualified teachers, non-overlapping schedul
       ).data;
       const questions = (
         await call("/admin/questions", null, admin)
-      ).data.filter((q) => q.language === language.code);
+      ).data.filter(
+        (q) => q.language === language.code && q.assessment === "legacy",
+      );
       const answers = Object.fromEntries(
         questions.map((q) => [q.id, q.answer]),
       );
