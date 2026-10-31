@@ -30,10 +30,14 @@ INSERT INTO @Expected VALUES
 ('materials','classId','classes','NO_ACTION',0),
 ('contacts','courseId','courses','SET_NULL',1),
 ('sessions','userId','users','CASCADE',0),
-('audit_logs','actorId','users','SET_NULL',1);
+('audit_logs','actorId','users','SET_NULL',1),
+('teacher_applications','userId','users','NO_ACTION',0),
+('teacher_applications','reviewedBy','users','NO_ACTION',1),
+('teacher_assessments','applicationId','teacher_applications','NO_ACTION',0),
+('teacher_assessments','createdBy','users','NO_ACTION',0);
 
-IF (SELECT COUNT(*) FROM sys.foreign_keys WHERE schema_id=SCHEMA_ID(N'dbo')) <> 11
-    THROW 51200, 'Expected exactly 11 foreign keys.', 1;
+IF (SELECT COUNT(*) FROM sys.foreign_keys WHERE schema_id=SCHEMA_ID(N'dbo')) <> 15
+    THROW 51200, 'Expected exactly 15 foreign keys.', 1;
 
 IF EXISTS (
     SELECT 1 FROM @Expected e
@@ -74,13 +78,14 @@ DEALLOCATE RelationCursor;
 BEGIN TRY
     BEGIN TRANSACTION;
     DECLARE @user int,@course int,@teacher int,@class int,@enrollment int,
-            @result int,@material int,@contact int,@audit int,
+            @result int,@material int,@contact int,@audit int,@application int,@assessment int,
             @token varchar(64)=REPLACE(CONVERT(varchar(36),NEWID()),'-',''),
             @missing int=-2147483648;
     IF EXISTS(SELECT 1 FROM dbo.users WHERE id=@missing)
        OR EXISTS(SELECT 1 FROM dbo.courses WHERE id=@missing)
        OR EXISTS(SELECT 1 FROM dbo.teachers WHERE id=@missing)
        OR EXISTS(SELECT 1 FROM dbo.classes WHERE id=@missing)
+       OR EXISTS(SELECT 1 FROM dbo.teacher_applications WHERE id=@missing)
         THROW 51203, 'Reserved invalid ID exists; cannot run negative tests.', 1;
 
     INSERT INTO dbo.users(name,email,passwordHash,role)
@@ -111,6 +116,13 @@ BEGIN TRY
     INSERT INTO dbo.audit_logs(actorId,action,resource,recordId) VALUES(@user,N'test',N'users',@user);
     SET @audit=CONVERT(int,SCOPE_IDENTITY());
 
+    INSERT INTO dbo.teacher_applications(userId,name,email,phone,language,levelCode,qualifications,experience,filename,mime,size,content,reviewedBy)
+    VALUES(@user,N'Test',@token+N'@example.com','0901234567','ja','N2',N'JLPT N2',4,N'cv.pdf','application/pdf',1,0x01,@user);
+    SET @application=CONVERT(int,SCOPE_IDENTITY());
+    INSERT INTO dbo.teacher_assessments(applicationId,language,levelCode,basis,questions,tasks,createdBy)
+    VALUES(@application,'ja','N2',N'CV đã được đối chiếu',N'[]',N'[]',@user);
+    SET @assessment=CONVERT(int,SCOPE_IDENTITY());
+
     DECLARE @Checks TABLE (id int IDENTITY PRIMARY KEY, label nvarchar(150), command nvarchar(max));
     INSERT INTO @Checks VALUES
     (N'classes.courseId',N'UPDATE dbo.classes SET courseId=@bad WHERE id=@class'),
@@ -124,6 +136,11 @@ BEGIN TRY
     (N'contacts.courseId',N'UPDATE dbo.contacts SET courseId=@bad WHERE id=@contact'),
     (N'sessions.userId',N'UPDATE dbo.sessions SET userId=@bad WHERE token=@token'),
     (N'audit_logs.actorId',N'UPDATE dbo.audit_logs SET actorId=@bad WHERE id=@audit'),
+    (N'teacher_applications.userId',N'UPDATE dbo.teacher_applications SET userId=@bad WHERE id=@application'),
+    (N'teacher_applications.reviewedBy',N'UPDATE dbo.teacher_applications SET reviewedBy=@bad WHERE id=@application'),
+    (N'teacher_assessments.applicationId',N'UPDATE dbo.teacher_assessments SET applicationId=@bad WHERE id=@assessment'),
+    (N'teacher_assessments.createdBy',N'UPDATE dbo.teacher_assessments SET createdBy=@bad WHERE id=@assessment'),
+    (N'Chặn xóa hồ sơ đang có bài kiểm tra',N'DELETE FROM dbo.teacher_applications WHERE id=@application'),
     (N'Chặn xóa khóa học đang có lớp',N'DELETE FROM dbo.courses WHERE id=@course'),
     (N'Chặn xóa giáo viên đang dạy lớp',N'DELETE FROM dbo.teachers WHERE id=@teacher'),
     (N'Chặn xóa lớp đang có đăng ký/tài liệu',N'DELETE FROM dbo.classes WHERE id=@class'),
@@ -136,9 +153,9 @@ BEGIN TRY
         SET @error=0;
         BEGIN TRY
             EXEC sp_executesql @sql,
-                N'@bad int,@user int,@course int,@teacher int,@class int,@enrollment int,@result int,@material int,@contact int,@audit int,@token varchar(64)',
+                N'@bad int,@user int,@course int,@teacher int,@class int,@enrollment int,@result int,@material int,@contact int,@audit int,@token varchar(64),@application int,@assessment int',
                 @bad=@missing,@user=@user,@course=@course,@teacher=@teacher,@class=@class,@enrollment=@enrollment,
-                @result=@result,@material=@material,@contact=@contact,@audit=@audit,@token=@token;
+                @result=@result,@material=@material,@contact=@contact,@audit=@audit,@token=@token,@application=@application,@assessment=@assessment;
         END TRY
         BEGIN CATCH
             SET @error=ERROR_NUMBER();
@@ -155,6 +172,17 @@ BEGIN TRY
     -- Release blocking references to test CASCADE and SET NULL explicitly.
     UPDATE dbo.enrollments SET userId=NULL,verifiedBy=NULL WHERE id=@enrollment;
     DELETE FROM dbo.placement_attempts WHERE token=@token;
+    -- The recruitment record must still block user deletion after learning links are released.
+    DECLARE @recruitmentDeleteError int=0;
+    BEGIN TRY
+        DELETE FROM dbo.users WHERE id=@user;
+    END TRY
+    BEGIN CATCH
+        SET @recruitmentDeleteError=ERROR_NUMBER();
+    END CATCH;
+    IF @recruitmentDeleteError<>547 THROW 51209, 'Recruitment must prevent deleting its referenced account.', 1;
+    DELETE FROM dbo.teacher_assessments WHERE id=@assessment;
+    DELETE FROM dbo.teacher_applications WHERE id=@application;
     DELETE FROM dbo.users WHERE id=@user;
     IF EXISTS(SELECT 1 FROM dbo.sessions WHERE token=@token)
         THROW 51205, 'Session cascade failed.', 1;
@@ -173,7 +201,7 @@ BEGIN TRY
     PRINT N'PASS: Xóa khóa học giữ yêu cầu tư vấn, đặt courseId=NULL';
 
     ROLLBACK;
-    PRINT N'PASS: 11 quan hệ, 0 mồ côi, 11 lần chặn ID sai, 4 lần chặn xóa và 4 hành vi CASCADE/SET NULL. Đã rollback.';
+    PRINT N'PASS: 15 quan hệ, 0 mồ côi, 15 lần chặn ID sai, 6 lần chặn xóa và 4 hành vi CASCADE/SET NULL. Đã rollback.';
 END TRY
 BEGIN CATCH
     IF XACT_STATE()<>0 ROLLBACK;

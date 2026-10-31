@@ -26,6 +26,7 @@ import {
 } from "./pages/PublicPages";
 import { Enrollment, Placement, Login, Student } from "./pages/AccountPages";
 import Admin from "./pages/Admin";
+import Recruitment from "./pages/Recruitment.jsx";
 const links = [
   ["/", "Trang chủ"],
   ["/gioi-thieu", "Về trung tâm"],
@@ -162,6 +163,7 @@ function Layout({ user, logout, children }) {
             <Link to="/gioi-thieu">Về trung tâm</Link>
             <Link to="/khoa-hoc">Chương trình học</Link>
             <Link to="/giao-vien">Đội ngũ giáo viên</Link>
+            <Link to="/ung-tuyen">Ứng tuyển giáo viên</Link>
             <Link to="/tin-tuc">Góc học tập</Link>
           </div>
           <div>
@@ -255,6 +257,7 @@ export default function App() {
             <Route path="/khoa-hoc/:id" element={<CourseDetail />} />
             <Route path="/giao-vien" element={<Teachers />} />
             <Route path="/giao-vien/:id" element={<TeacherDetail />} />
+            <Route path="/ung-tuyen" element={<Recruitment />} />
             <Route path="/lich-khai-giang" element={<Schedule />} />
             <Route path="/tin-tuc" element={<News />} />
             <Route path="/tin-tuc/:id" element={<NewsDetail />} />

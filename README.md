@@ -6,6 +6,12 @@ Bản cập nhật ngày 31/10/2026 hỗ trợ **Anh, Trung, Hàn, Nhật, Pháp
 
 Chạy `npm.cmd run backup` rồi `npm.cmd run seed:languages` để nâng cấp database local; ứng dụng cũng tự nâng cấp khi khởi động. Bộ SQL Server trong [database/sqlserver](database/sqlserver/README.md) có script nâng cấp riêng cho database đã tạo.
 
+## Tuyển dụng giáo viên
+
+Vào **Giáo viên → Ứng tuyển giáo viên** (`/ung-tuyen`), đăng nhập/tạo tài khoản và gửi CV PDF/DOCX tối đa 5 MB kèm ngôn ngữ/cấp độ, chứng chỉ và kinh nghiệm. QTV vào **Admin → Tuyển dụng giáo viên** để đọc CV, xác nhận cấp độ và giao đề tương ứng; có thể sửa hai nhiệm vụ tự luận theo CV. Ứng viên làm bài trong 60 phút, lưu nháp tự động và nộp trên cùng trang. QTV chấm tự luận, ghi phản hồi rồi duyệt/không duyệt. Hệ thống chặn duyệt khi chưa hoàn thành đề mới nhất và giữ CV, ghi chú nội bộ riêng tư.
+
+Đây là sàng lọc nội bộ với QTV đối chiếu CV, không có AI tự đọc/xác thực chứng chỉ. Website dùng SQLite/PostgreSQL tự bổ sung bảng khi khởi động. SQL Server dùng [script nâng cấp 10](database/sqlserver/10-teacher-recruitment.sql). Chi tiết [quy trình và API](docs/teacher-recruitment.md). Tính năng mới trong mã nguồn local; đường dẫn hosting bên dưới là bản triển khai trước đó.
+
 ## Hosting miễn phí, không cần bật máy cá nhân
 
 **[Mở website Vinh English Center](https://vinh-english-center.onrender.com)** — đã triển khai và kiểm tra ngày 09/10/2026.

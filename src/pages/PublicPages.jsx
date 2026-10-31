@@ -451,6 +451,12 @@ export function Teachers() {
         mình.
       </PageHeading>
       <section className="section container">
+        <div className="recruitment-invite">
+          <p>Bạn muốn đồng hành cùng đội ngũ giảng dạy?</p>
+          <Link className="button outline" to="/ung-tuyen">
+            Ứng tuyển giáo viên <ArrowUpRight size={18} />
+          </Link>
+        </div>
         <LanguageSelect
           label="Ngôn ngữ giảng dạy"
           value={language}

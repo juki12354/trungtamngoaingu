@@ -1,6 +1,6 @@
 # Database SQL Server — Trung tâm ngoại ngữ
 
-Bản SQL Server dựa trên 14 bảng thực tế của dự án Vinh Language Center. Bản cập nhật 31/10/2026 hỗ trợ **16 ngôn ngữ, 99 khóa học, 24 giáo viên, 302 lớp và 463 câu hỏi** (288 câu năng lực mới, 175 câu khảo sát cũ). Có đầy đủ script tạo bảng, khóa chính/ngoại, dữ liệu mẫu và truy vấn để thực hành trong SQL Server Management Studio (SSMS).
+Bản SQL Server dựa trên 16 bảng thực tế của dự án Vinh Language Center, gồm hồ sơ CV và bài kiểm tra giáo viên. Bản cập nhật 31/10/2026 hỗ trợ **16 ngôn ngữ, 99 khóa học, 24 giáo viên, 302 lớp và 463 câu hỏi** (288 câu năng lực mới, 175 câu khảo sát cũ). Có đầy đủ script tạo bảng, khóa chính/ngoại, dữ liệu mẫu và truy vấn để thực hành trong SQL Server Management Studio (SSMS).
 
 ## Mở database đã tạo trên máy này
 
@@ -14,11 +14,11 @@ Bản SQL Server dựa trên 14 bảng thực tế của dự án Vinh Language 
 
 Cần SQL Server 2016 trở lên và SSMS, quyền tạo database. Mở từng file trong SSMS và chạy theo thứ tự:
 
-1. **`01-schema.sql`**: tạo database `TrungTamNgoaiNgu`, 14 bảng, các index và 3 view. File từ chối ghi đè nếu database đã có bảng.
+1. **`01-schema.sql`**: tạo database `TrungTamNgoaiNgu`, 16 bảng, các index và 3 view. File từ chối ghi đè nếu database đã có bảng.
 2. **`02-sample-data.sql`**: thêm 99 khóa, 24 giáo viên, 302 lớp nhiều ca, 463 câu hỏi, 3 bài viết, 2 tài khoản, 1 đăng ký và 1 yêu cầu tư vấn mẫu. Chạy lại file này sẽ bỏ qua dữ liệu đã nhập, giữ chỉnh sửa hiện có.
 3. **`03-queries.sql`**: 12 nhóm truy vấn minh họa, gồm lọc lớp theo ngôn ngữ/cấp độ, chỉ đọc dữ liệu.
 4. **`04-verify.sql`** (tùy chọn): kiểm tra trên dữ liệu mẫu; các lệnh thử sửa/thêm được rollback.
-5. **`05-verify-relationships.sql`** (tùy chọn): đối chiếu đủ 11 khóa ngoại, kiểu cột, cho phép NULL, hành vi xóa, bản ghi mồ côi và thử ghi/xóa sai liên kết. Tạo bản ghi thử riêng rồi rollback; không yêu cầu dữ liệu mẫu.
+5. **`05-verify-relationships.sql`** (tùy chọn): đối chiếu đủ 15 khóa ngoại, kiểu cột, cho phép NULL, hành vi xóa, bản ghi mồ côi và thử ghi/xóa sai liên kết. Tạo bản ghi thử riêng rồi rollback; không yêu cầu dữ liệu mẫu.
 
 Lệnh PowerShell tương đương, chạy tại thư mục dự án:
 
@@ -42,6 +42,12 @@ Database đã có 16 ngôn ngữ: sao lưu rồi chạy **`08-competency-migrati
 
 View `vw_LichKhaiGiang` có thêm `NgonNgu`, `CapDo`. Xem [quy tắc xếp lớp và giới hạn bài kiểm tra](../../docs/COMPETENCY.md). Chấm bài và lọc lớp còn chỗ do backend thực hiện; script SQL không tự cấp chứng chỉ hoặc tự suy ra trình độ từ một tổng điểm.
 
+## Nâng cấp tuyển dụng giáo viên
+
+Sao lưu database đã có rồi chạy **`10-teacher-recruitment.sql`**. Bổ sung `teacher_applications` (CV nhị phân, chuyên môn khai báo, trạng thái, đánh giá) và `teacher_assessments` (đề theo ngôn ngữ/cấp độ được QTV xác nhận, bài làm, hạn nộp). Có bốn khóa ngoại mới, tổng cộng 15. Chạy lại không ghi đè hồ sơ. Sau đó chạy `05-verify-relationships.sql` để kiểm tra toàn bộ quan hệ.
+
+Đề tuyển dụng được lưu riêng thành bản chụp; không nối khóa ngoại từ câu hỏi JSON đến ngân hàng câu hỏi có thể thay đổi. QTV phải đối chiếu CV, giao đề và chấm tự luận trước khi duyệt; backend kiểm tra quy trình này. Xem [luồng tuyển dụng và API](../../docs/teacher-recruitment.md).
+
 ## Các bảng và vai trò
 
 | Bảng | Chức năng | Quan hệ chính |
@@ -60,6 +66,8 @@ View `vw_LichKhaiGiang` có thêm `NgonNgu`, `CapDo`. Xem [quy tắc xếp lớp
 | `sessions` | Mã phiên đã băm và hạn đăng nhập | `userId` |
 | `audit_logs` | Nhật ký thao tác quản trị | `actorId` |
 | `metadata` | Phiên bản dữ liệu/đánh dấu nhập mẫu | Khóa `key` |
+| `teacher_applications` | CV riêng tư, ngôn ngữ/cấp độ, kinh nghiệm, quyết định tuyển dụng | `userId`, `reviewedBy` |
+| `teacher_assessments` | Các lần giao đề, trắc nghiệm, tự luận, lưu nháp và hạn nộp | `applicationId`, `createdBy` |
 
 Học viên nằm trong `users` với `role='student'`; không tạo thêm bảng học viên trùng thông tin. Đăng ký khách có `userId=NULL` đến khi được tiếp nhận. Lịch học và cơ sở nằm trong `classes`, theo thiết kế hiện tại của website.
 
@@ -76,6 +84,10 @@ erDiagram
     classes ||--o{ enrollments : "nhận đăng ký"
     classes ||--o{ materials : "tài liệu"
     courses o|--o{ contacts : "quan tâm"
+    users ||--o{ teacher_applications : "ứng tuyển"
+    users o|--o{ teacher_applications : "đánh giá qua reviewedBy"
+    teacher_applications ||--o{ teacher_assessments : "giao đề"
+    users ||--o{ teacher_assessments : "ra đề qua createdBy"
 ```
 
 Hai liên kết từ `users` đến `enrollments` có vai trò khác nhau: `userId` là học viên, `verifiedBy` là người xác minh. Các bảng câu hỏi, tin tức và metadata độc lập nên không nằm trong sơ đồ quan hệ trên. Bộ câu hỏi của lượt làm bài và phần xem lại kết quả được lưu JSON như một bản chụp; không có khóa ngoại từ JSON đến bảng câu hỏi đang được chỉnh sửa.
@@ -103,9 +115,9 @@ Tài khoản mẫu trong bản SQL Server: `admin@vinhenglish.vn` / `Admin@12345
 ## Kiểm tra thực tế
 
 - Tạo schema và nhập mẫu trên SQL Server 2022 thành công.
-- 14 bảng, 3 view; số bản ghi khóa/giáo viên/lớp/câu hỏi sau nâng cấp là 99/24/302/463, gồm 16 ngôn ngữ. Trong đó có 288 câu năng lực, mỗi nhóm đủ từ vựng/ngữ pháp/đọc hiểu.
+- 16 bảng, 3 view; số bản ghi khóa/giáo viên/lớp/câu hỏi sau nâng cấp là 99/24/302/463, gồm 16 ngôn ngữ. Trong đó có 288 câu năng lực, mỗi nhóm đủ từ vựng/ngữ pháp/đọc hiểu. Hai bảng tuyển dụng khởi tạo trống, không tạo CV giả.
 - File kiểm tra có 12 tình huống dữ liệu sai phải bị từ chối và 1 tình huống cho phép đăng ký lại sau khi hủy; mọi thay đổi thử rollback.
 - Chạy lại file dữ liệu mẫu không thêm bản ghi trùng. Chạy lại file schema từ chối ghi đè.
-- Đối chiếu 11 khóa ngoại đang bật và được SQL Server tin cậy; không có bản ghi mồ côi. Thử ID sai ở đủ 11 liên kết, 4 trường hợp xóa bị chặn và 4 hành vi CASCADE/SET NULL: đạt. Xem [báo cáo quan hệ](RELATIONSHIP-REVIEW.md).
+- Đối chiếu 15 khóa ngoại đang bật và được SQL Server tin cậy; không có bản ghi mồ côi. Thử ID sai ở đủ 15 liên kết, 6 trường hợp xóa bị chặn và 4 hành vi CASCADE/SET NULL: đạt. Xem [báo cáo quan hệ](RELATIONSHIP-REVIEW.md).
 
 Giữ những file này để nộp đồ án hoặc tạo lại database; không cần `.bak` để chạy script.

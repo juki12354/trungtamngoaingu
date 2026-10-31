@@ -2,6 +2,12 @@ import { useState } from "react";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { useApp, api, Field, ErrorMessage } from "../lib";
+const destination = (user, next) =>
+  next?.startsWith("/") && !next.startsWith("//")
+    ? next
+    : user.role === "admin"
+      ? "/admin"
+      : "/hoc-vien";
 export function Login() {
   const { user, setUser, demo } = useApp();
   const navigate = useNavigate(),
@@ -9,10 +15,9 @@ export function Login() {
   const [register, setRegister] = useState(false),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
-  if (user)
-    return (
-      <Navigate replace to={user.role === "admin" ? "/admin" : "/hoc-vien"} />
-    );
+  const next = params.get("next"),
+    candidate = next === "/ung-tuyen";
+  if (user) return <Navigate replace to={destination(user, next)} />;
   async function submit(e) {
     e.preventDefault();
     setBusy(true);
@@ -24,15 +29,7 @@ export function Login() {
         body,
       });
       setUser(user);
-      const next = params.get("next");
-      navigate(
-        next?.startsWith("/") && !next.startsWith("//")
-          ? next
-          : user.role === "admin"
-            ? "/admin"
-            : "/hoc-vien",
-        { replace: true },
-      );
+      navigate(destination(user, next), { replace: true });
     } catch (e) {
       setError(e.message);
     } finally {
@@ -43,7 +40,10 @@ export function Login() {
     <section className="auth-section">
       <div className="container auth-grid">
         <div className="auth-copy">
-          <span className="eyebrow">VINH ENGLISH · CỔNG HỌC VIÊN</span>
+          <span className="eyebrow">
+            VINH LANGUAGES ·{" "}
+            {candidate ? "ỨNG TUYỂN GIÁO VIÊN" : "CỔNG HỌC VIÊN"}
+          </span>
           <h1>
             Rất vui được
             <br />
@@ -62,11 +62,19 @@ export function Login() {
               Đã đổi mật khẩu. Hãy đăng nhập lại bằng mật khẩu mới.
             </p>
           )}
-          <h2>{register ? "Tạo tài khoản học viên" : "Chào mừng trở lại!"}</h2>
-          <p>
+          <h2>
             {register
-              ? "Bắt đầu quản lý hành trình học của bạn."
-              : "Đăng nhập để tiếp tục hành trình học tập."}
+              ? candidate
+                ? "Tạo tài khoản ứng viên"
+                : "Tạo tài khoản học viên"
+              : "Chào mừng trở lại!"}
+          </h2>
+          <p>
+            {candidate
+              ? "Đăng nhập hoặc tạo tài khoản để gửi CV và theo dõi bài kiểm tra tuyển dụng."
+              : register
+                ? "Bắt đầu quản lý hành trình học của bạn."
+                : "Đăng nhập để tiếp tục hành trình học tập."}
           </p>
           <form onSubmit={submit} key={register ? "register" : "login"}>
             {register && (

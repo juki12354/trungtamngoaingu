@@ -40,11 +40,13 @@ import {
 } from "../lib";
 import { languages, languageName } from "../../shared/languages.js";
 import { proficiencyFor, skillLabels } from "../../shared/proficiency.js";
+import RecruitmentPanel from "./RecruitmentPanel.jsx";
 const resources = [
   ["overview", "Tổng quan", LayoutDashboard],
   ["courses", "Khóa học", BookOpen],
   ["students", "Học viên", Users],
   ["teachers", "Giáo viên", GraduationCap],
+  ["recruitment", "Tuyển dụng giáo viên", ClipboardList],
   ["classes", "Lớp & lịch học", CalendarDays],
   ["enrollments", "Đăng ký & điểm", ClipboardList],
   ["questions", "Bài kiểm tra", FileQuestion],
@@ -230,6 +232,8 @@ function AdminContent() {
           <Overview onNavigate={setResource} key={version} />
         ) : resource === "materials" ? (
           <MaterialsPanel />
+        ) : resource === "recruitment" ? (
+          <RecruitmentPanel />
         ) : resource === "reports" ? (
           <ReportsPanel />
         ) : resource === "password" ? (

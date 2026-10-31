@@ -1,6 +1,6 @@
-# Kiểm tra quan hệ bảng — 22/10/2026
+# Kiểm tra quan hệ bảng — cập nhật 31/10/2026
 
-**Kết luận: 11 khóa ngoại trong bản SQL Server đều đúng với mô hình hiện tại của website.** Đã đối chiếu file `01-schema.sql` với metadata của database `TrungTamNgoaiNgu` trên instance `manh\MAYAO`, sau đó thử thao tác thật trong transaction được rollback.
+**Kết luận: 15 khóa ngoại trong bản SQL Server đều đúng với mô hình hiện tại của website.** Đã đối chiếu file `01-schema.sql` với metadata của database `TrungTamNgoaiNgu` trên instance `manh\MAYAO`, sau đó thử thao tác thật trong transaction được rollback. Bốn liên kết mới phục vụ CV và bài kiểm tra tuyển dụng giáo viên.
 
 ## Toàn bộ liên kết
 
@@ -19,8 +19,12 @@ Mỗi dòng là một quan hệ một–nhiều từ bảng cha đến bảng co
 | `contacts.courseId` | `courses.id` | Có | Đặt NULL, giữ yêu cầu tư vấn | Đúng |
 | `sessions.userId` | `users.id` | Không | Xóa phiên theo tài khoản | Đúng |
 | `audit_logs.actorId` | `users.id` | Có | Đặt NULL, giữ nhật ký | Đúng |
+| `teacher_applications.userId` | `users.id` | Không | Chặn khi còn CV của tài khoản | Đúng |
+| `teacher_applications.reviewedBy` | `users.id` | Có | Chặn khi còn đánh giá tuyển dụng | Đúng |
+| `teacher_assessments.applicationId` | `teacher_applications.id` | Không | Chặn khi hồ sơ còn đề/bài làm | Đúng |
+| `teacher_assessments.createdBy` | `users.id` | Không | Chặn khi còn đề do QTV giao | Đúng |
 
-Toàn bộ cột khóa ngoại có kiểu `INT` tương ứng với khóa chính `INT`. Cả 11 khóa ngoại có `is_disabled=0`, `is_not_trusted=0`; hành vi cập nhật khóa chính là `NO ACTION`.
+Toàn bộ cột khóa ngoại có kiểu `INT` tương ứng với khóa chính `INT`. Cả 15 khóa ngoại có `is_disabled=0`, `is_not_trusted=0`; hành vi cập nhật khóa chính là `NO ACTION`.
 
 Một học viên đăng ký nhiều lớp và một lớp có nhiều học viên: đây là quan hệ nhiều–nhiều được tách qua bảng `enrollments`, đúng thiết kế. Không cần thêm liên kết trực tiếp từ học viên đến khóa học vì đã xác định được qua `enrollments → classes → courses`.
 
@@ -28,10 +32,10 @@ Một học viên đăng ký nhiều lớp và một lớp có nhiều học vi�
 
 File thực thi: [05-verify-relationships.sql](05-verify-relationships.sql).
 
-- So khớp 11 liên kết dự kiến với database thật, gồm đích, kiểu dữ liệu, NULL, trạng thái và hành vi xóa: đạt.
-- Kiểm tra toàn bộ 11 liên kết bằng LEFT JOIN: **0 bản ghi mồ côi**.
-- Thử ghi ID cha không tồn tại tại từng cột khóa ngoại: **11/11 bị chặn với lỗi 547**.
-- Thử xóa khóa học đang có lớp, giáo viên đang dạy lớp, lớp đang có đăng ký/tài liệu và tài khoản còn đăng ký/lượt thi: **4/4 bị chặn**.
+- So khớp 15 liên kết dự kiến với database thật, gồm đích, kiểu dữ liệu, NULL, trạng thái và hành vi xóa: đạt.
+- Kiểm tra toàn bộ 15 liên kết bằng LEFT JOIN: **0 bản ghi mồ côi**.
+- Thử ghi ID cha không tồn tại tại từng cột khóa ngoại: **15/15 bị chặn với lỗi 547**.
+- Thử xóa cha còn liên kết, gồm hồ sơ còn bài kiểm tra và tài khoản còn dữ liệu tuyển dụng: **6/6 bị chặn**.
 - Sau khi gỡ các liên kết đang chặn: xóa tài khoản thu hồi phiên, giữ kết quả thi và nhật ký với khóa ngoại NULL; xóa khóa học giữ yêu cầu tư vấn với `courseId=NULL`: **4/4 hành vi đạt**.
 - `DBCC CHECKCONSTRAINTS WITH ALL_CONSTRAINTS`: không trả bản ghi vi phạm.
 - Tất cả bản ghi thử đã rollback; giá trị ID tự tăng có thể có khoảng trống bình thường sau các lần thử.
@@ -53,6 +57,6 @@ Các liên kết hiện tại bảo đảm ID tồn tại và hành vi xóa đú
 - Chống trùng lịch giáo viên/phòng, chống duyệt vượt sĩ số và liên kết lượt thi với kết quả đang nằm trong backend/JSON, không được thực thi chỉ bằng khóa ngoại.
 - Điểm kỹ năng, danh sách thứ học và lựa chọn câu hỏi là JSON; kiểm tra `ISJSON` chỉ bảo đảm cú pháp. Cấu trúc và giá trị bên trong cần validation nghiệp vụ.
 
-Không phát hiện khóa ngoại trỏ nhầm hoặc cần đổi bảng đích. Bản cập nhật này bổ sung kiểm tra và hoàn thiện tài liệu/sơ đồ, giữ nguyên cấu trúc 14 bảng.
+Không phát hiện khóa ngoại trỏ nhầm hoặc cần đổi bảng đích. Bản cập nhật tuyển dụng bổ sung hai bảng, tổng cộng 16 bảng. Quyền QTV và điều kiện hoàn thành bài kiểm tra mới nhất trước khi duyệt được backend thực thi, không suy ra từ khóa ngoại.
 
-Database có thêm `dbo.sysdiagrams` do chức năng Database Diagrams của SSMS tạo. Đây là bảng lưu sơ đồ, không phải bảng nghiệp vụ thiếu liên kết. Đã sửa bộ kiểm tra cũ để không đếm bảng này vào 14 bảng ứng dụng; trước khi sửa, việc lưu sơ đồ khiến phép kiểm tra số bảng báo lỗi nhầm.
+Database có thêm `dbo.sysdiagrams` do chức năng Database Diagrams của SSMS tạo. Đây là bảng lưu sơ đồ, không phải bảng nghiệp vụ thiếu liên kết. Bộ kiểm tra không đếm bảng này vào 16 bảng ứng dụng.

@@ -13,7 +13,7 @@ SET NUMERIC_ROUNDABORT OFF;
 SET XACT_ABORT OFF;
 
 -- SSMS may add dbo.sysdiagrams when the user saves a database diagram.
-IF (SELECT COUNT(*) FROM sys.tables WHERE schema_id=SCHEMA_ID(N'dbo') AND is_ms_shipped=0 AND name<>N'sysdiagrams') <> 14 THROW 51100, 'Expected 14 application tables.', 1;
+IF (SELECT COUNT(*) FROM sys.tables WHERE schema_id=SCHEMA_ID(N'dbo') AND is_ms_shipped=0 AND name<>N'sysdiagrams') <> 16 THROW 51100, 'Expected 16 application tables.', 1;
 IF (SELECT COUNT(*) FROM dbo.courses) <> 99 THROW 51100, 'Expected 99 courses.', 1;
 IF (SELECT COUNT(*) FROM dbo.teachers) <> 24 THROW 51100, 'Expected 24 teachers.', 1;
 IF (SELECT COUNT(*) FROM dbo.classes) <> 302 THROW 51100, 'Expected 302 classes.', 1;
