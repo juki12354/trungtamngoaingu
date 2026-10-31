@@ -17,7 +17,7 @@ const uploadSchema = z.object({
     ),
   content: z.string().min(1).max(7_000_000),
 });
-async function fileMime(filename, content) {
+export async function fileMime(filename, content) {
   if (
     /\.pdf$/i.test(filename) &&
     content.subarray(0, 5).toString() === "%PDF-" &&

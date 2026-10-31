@@ -69,6 +69,26 @@ export function migrate(db) {
       CREATE TABLE IF NOT EXISTS materials (id INTEGER PRIMARY KEY, classId INTEGER NOT NULL REFERENCES classes(id), title TEXT NOT NULL, lesson TEXT NOT NULL DEFAULT '', filename TEXT NOT NULL, mime TEXT NOT NULL, size INTEGER NOT NULL, content BLOB NOT NULL, createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS audit_logs (id INTEGER PRIMARY KEY, actorId INTEGER REFERENCES users(id) ON DELETE SET NULL, action TEXT NOT NULL, resource TEXT NOT NULL, recordId INTEGER, createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
       CREATE INDEX IF NOT EXISTS enrollments_user_class ON enrollments(userId,classId);
+      CREATE TABLE IF NOT EXISTS teacher_applications (
+        id INTEGER PRIMARY KEY, userId INTEGER NOT NULL REFERENCES users(id),
+        name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL,
+        language TEXT NOT NULL, levelCode TEXT NOT NULL, qualifications TEXT NOT NULL,
+        experience INTEGER NOT NULL CHECK(experience BETWEEN 0 AND 60), coverLetter TEXT NOT NULL DEFAULT '',
+        filename TEXT NOT NULL, mime TEXT NOT NULL, size INTEGER NOT NULL CHECK(size BETWEEN 1 AND 5242880), content BLOB NOT NULL,
+        status TEXT NOT NULL DEFAULT 'submitted' CHECK(status IN ('submitted','test_assigned','review','approved','rejected')),
+        feedback TEXT NOT NULL DEFAULT '', internalNote TEXT NOT NULL DEFAULT '', evaluation TEXT NOT NULL DEFAULT '{}',
+        reviewedBy INTEGER REFERENCES users(id), reviewedAt TEXT, createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS active_teacher_application ON teacher_applications(userId,language) WHERE status!='rejected';
+      CREATE TABLE IF NOT EXISTS teacher_assessments (
+        id INTEGER PRIMARY KEY, applicationId INTEGER NOT NULL REFERENCES teacher_applications(id),
+        language TEXT NOT NULL, levelCode TEXT NOT NULL, basis TEXT NOT NULL, reason TEXT NOT NULL DEFAULT '',
+        questions TEXT NOT NULL, tasks TEXT NOT NULL, answers TEXT NOT NULL DEFAULT '{}', written TEXT NOT NULL DEFAULT '[]',
+        status TEXT NOT NULL DEFAULT 'assigned' CHECK(status IN ('assigned','started','submitted','superseded')),
+        startedAt INTEGER, expires INTEGER, submittedAt TEXT, score INTEGER,
+        createdBy INTEGER NOT NULL REFERENCES users(id), createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS teacher_assessment_application ON teacher_assessments(applicationId,id);
       CREATE TRIGGER IF NOT EXISTS unique_student_enrollment_insert BEFORE INSERT ON enrollments WHEN NEW.userId IS NOT NULL AND NEW.status!='cancelled' AND EXISTS(SELECT 1 FROM enrollments WHERE userId=NEW.userId AND classId=NEW.classId AND status!='cancelled') BEGIN SELECT RAISE(ABORT, 'UNIQUE constraint failed: enrollments.userId, enrollments.classId'); END;
       CREATE TRIGGER IF NOT EXISTS unique_student_enrollment_update BEFORE UPDATE OF userId,classId,status ON enrollments WHEN NEW.userId IS NOT NULL AND NEW.status!='cancelled' AND EXISTS(SELECT 1 FROM enrollments WHERE userId=NEW.userId AND classId=NEW.classId AND status!='cancelled' AND id!=NEW.id) BEGIN SELECT RAISE(ABORT, 'UNIQUE constraint failed: enrollments.userId, enrollments.classId'); END;
     `);

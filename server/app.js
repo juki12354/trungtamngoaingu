@@ -21,6 +21,7 @@ import { languages, languageCodes } from "../shared/languages.js";
 import { proficiencyFor } from "../shared/proficiency.js";
 import { campuses } from "./campuses.js";
 import { mountManagement } from "./management.js";
+import { mountRecruitment } from "./recruitment.js";
 const fail = (status, message) =>
   Object.assign(new Error(message), {
     status,
@@ -74,7 +75,7 @@ export async function createApp({
     }),
   );
   app.use(
-    "/api/admin/materials",
+    ["/api/admin/materials", "/api/recruitment/applications"],
     express.json({
       limit: "8mb",
     }),
@@ -440,6 +441,7 @@ export async function createApp({
     one,
     write,
   });
+  mountRecruitment(app, { db, requireUser, requireAdmin, write, submitLimit });
   app.get("/api/admin/overview", async (_req, res) =>
     res.json({
       students: (

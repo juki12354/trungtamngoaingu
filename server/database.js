@@ -36,6 +36,8 @@ export const tables = [
   "materials",
   "audit_logs",
   "sessions",
+  "teacher_applications",
+  "teacher_assessments",
 ];
 const identityTables = tables.filter(
   (table) => !["metadata", "sessions", "placement_attempts"].includes(table),
