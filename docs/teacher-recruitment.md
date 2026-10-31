@@ -40,3 +40,23 @@ CV nằm trong database riêng tư (BLOB/BYTEA), đi cùng bản sao lưu dữ l
 SQLite và PostgreSQL là backend chạy website; SQL Server là bộ SQL độc lập
 phục vụ đồ án. Chạy script `10-teacher-recruitment.sql` sau các nâng cấp cũ
 để bổ sung hai bảng và bốn quan hệ cho SQL Server.
+
+## Kiểm chứng ngày 31/10/2026
+
+- Lint/build đạt; bộ API SQLite: 55 đạt, một test chuyển SQLite sang PostgreSQL
+  chỉ chạy khi có test server riêng. Nhóm tuyển dụng + hosting trên PostgreSQL
+  riêng: 9/9 đạt, gồm cả test chuyển dữ liệu đó.
+- Toàn bộ 17 luồng trình duyệt đạt; luồng tuyển dụng kiểm tra gửi/tải CV,
+  giao đề N2, lưu nháp sau tải lại, chấm và duyệt, giữ riêng ghi chú QTV.
+  Kiểm tra giao diện từ 320 đến 1.440 px và axe WCAG không phát hiện vi phạm.
+- SQL Server: tạo mới + dữ liệu mẫu + kiểm tra ràng buộc đạt; script nâng cấp
+  chạy hai lần an toàn trên database local. 15 khóa ngoại tin cậy, không mồ côi,
+  15 ghi ID sai và 6 xóa cha còn liên kết đều bị chặn; thử nghiệm rollback.
+- Cập nhật lockfile: body-parser 2.4.0, Zod 4.6.7, qs 6.17.1,
+  ip-address 10.7.5. Audit production không còn mức cao/nghiêm trọng;
+  còn 8 cảnh báo mức vừa trong chuỗi glob/minimatch của ExcelJS, chưa thay
+  thư viện xuất Excel trong phạm vi tính năng này. Nguồn bản vá:
+  [body-parser](https://github.com/advisories/GHSA-27r3-jxmh-p828),
+  [Zod](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5).
+
+Thay đổi được kiểm tra local, chưa đẩy GitHub hoặc cập nhật bản Render.
