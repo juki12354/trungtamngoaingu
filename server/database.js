@@ -5,6 +5,7 @@ import { openDatabase } from "./db.js";
 import { addClassOptions } from "../scripts/add-class-options.mjs";
 import { addMultilingual } from "./multilingual.js";
 import { seedCompetency } from "./competency-seed.js";
+import { backfillQuestionLinks } from "./content-relations.js";
 
 // Keep the existing SQLite SQL/API names at the database boundary. Quoted
 // strings and identifiers are tokens, so question marks inside text stay intact.
@@ -38,6 +39,7 @@ export const tables = [
   "sessions",
   "teacher_applications",
   "teacher_assessments",
+  "placement_attempt_questions",
 ];
 const identityTables = tables.filter(
   (table) => !["metadata", "sessions", "placement_attempts"].includes(table),
@@ -188,6 +190,7 @@ export async function connectDatabase({
       await db.transaction(async () => {
         await addMultilingual(db);
         await seedCompetency(db);
+        await backfillQuestionLinks(db);
       });
     } catch (error) {
       await db.close();

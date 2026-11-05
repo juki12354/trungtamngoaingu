@@ -8,6 +8,7 @@ import {
   skillLabels,
 } from "../shared/proficiency.js";
 import { recommendClasses } from "./placement-recommendations.js";
+import { linkAttemptQuestions } from "./content-relations.js";
 const digest = (token) => createHash("sha256").update(token).digest("hex");
 export function mountPlacement(app, { db, submitLimit, all, write }) {
   app.post(
@@ -70,6 +71,7 @@ export function mountPlacement(app, { db, submitLimit, all, write }) {
           language,
           assessment,
         );
+      await linkAttemptQuestions(db, digest(token), questions);
       return {
         status: 201,
         body: {
@@ -105,7 +107,17 @@ export function mountPlacement(app, { db, submitLimit, all, write }) {
           409,
           "Lượt kiểm tra đã hết hạn sau 30 phút. Vui lòng bắt đầu lại.",
         );
-      const questions = JSON.parse(attempt.questions);
+      const linked = await db
+        .prepare(
+          "SELECT snapshot FROM placement_attempt_questions WHERE attemptToken=? ORDER BY position",
+        )
+        .all(digest(token));
+      const questions = linked.map((row) => JSON.parse(row.snapshot));
+      if (questions.length !== JSON.parse(attempt.questions).length)
+        throw fail(
+          409,
+          "Dữ liệu đề chưa đầy đủ. Vui lòng bắt đầu lượt kiểm tra mới.",
+        );
       if (
         !answers ||
         typeof answers !== "object" ||
@@ -121,6 +133,12 @@ export function mountPlacement(app, { db, submitLimit, all, write }) {
         throw fail(400, "Vui lòng trả lời đủ tất cả câu hỏi.");
       const score = questions.filter((q) => q.answer === answers[q.id]).length,
         ratio = score / questions.length;
+      for (const [index, q] of questions.entries())
+        await db
+          .prepare(
+            "UPDATE placement_attempt_questions SET selected=? WHERE attemptToken=? AND position=?",
+          )
+          .run(answers[q.id], digest(token), index + 1);
       const language = attempt.language || "en";
       if (attempt.assessment === "competency") {
         const analysis = evaluateCompetency(language, questions, answers);

@@ -22,6 +22,7 @@ import { proficiencyFor } from "../shared/proficiency.js";
 import { campuses } from "./campuses.js";
 import { mountManagement } from "./management.js";
 import { mountRecruitment } from "./recruitment.js";
+import { recordContentUpdate } from "./content-relations.js";
 const fail = (status, message) =>
   Object.assign(new Error(message), {
     status,
@@ -599,7 +600,9 @@ export async function createApp({
         };
       }
       await validateRelations(req.params.resource, data);
+      if (req.table === "news") data.authorId = req.user.id;
       const id = await write(req.table, data);
+      await recordContentUpdate(db, req.table, req.user.id);
       const row = await one(req.table, id);
       return {
         status: 201,
@@ -634,6 +637,7 @@ export async function createApp({
         throw fail(400, "Không có thay đổi hợp lệ.");
       await validateRelations(req.params.resource, data, req.params.id);
       await write(req.table, data, req.params.id);
+      await recordContentUpdate(db, req.table, req.user.id);
       if (req.table === "users" && data.passwordHash)
         await db
           .prepare("DELETE FROM sessions WHERE userId=?")
@@ -654,6 +658,7 @@ export async function createApp({
       await db
         .prepare(`DELETE FROM ${req.table} WHERE id=?`)
         .run(req.params.id);
+      await recordContentUpdate(db, req.table, req.user.id);
       return {
         status: 200,
         body: {

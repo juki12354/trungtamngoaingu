@@ -67,7 +67,9 @@ export function openDatabase(path, demo) {
           );
         }
       }
-      db.prepare("INSERT INTO metadata VALUES ('seeded', '1')").run();
+      db.prepare(
+        "INSERT INTO metadata(key,value) VALUES ('seeded', '1')",
+      ).run();
       db.exec("COMMIT");
     } catch (error) {
       db.exec("ROLLBACK");

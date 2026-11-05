@@ -30,6 +30,24 @@ export function migrate(db) {
       add("questions", "assessment", "TEXT NOT NULL DEFAULT 'legacy'");
     }
     add("placement_results", "analysis", "TEXT NOT NULL DEFAULT '{}'");
+    if (
+      db
+        .prepare(
+          "SELECT 1 FROM sqlite_master WHERE type='table' AND name='news'",
+        )
+        .get()
+    )
+      add(
+        "news",
+        "authorId",
+        "INTEGER REFERENCES users(id) ON DELETE SET NULL",
+      );
+    add(
+      "metadata",
+      "updatedBy",
+      "INTEGER REFERENCES users(id) ON DELETE SET NULL",
+    );
+    add("metadata", "updatedAt", "TEXT");
     for (const table of [
       "courses",
       "questions",
@@ -89,6 +107,14 @@ export function migrate(db) {
         createdBy INTEGER NOT NULL REFERENCES users(id), createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
       CREATE INDEX IF NOT EXISTS teacher_assessment_application ON teacher_assessments(applicationId,id);
+      CREATE TABLE IF NOT EXISTS placement_attempt_questions (
+        id INTEGER PRIMARY KEY,
+        attemptToken TEXT NOT NULL REFERENCES placement_attempts(token) ON DELETE CASCADE,
+        questionId INTEGER REFERENCES questions(id) ON DELETE SET NULL,
+        position INTEGER NOT NULL CHECK(position>0), snapshot TEXT NOT NULL,
+        selected INTEGER CHECK(selected BETWEEN 0 AND 3), UNIQUE(attemptToken,position)
+      );
+      CREATE INDEX IF NOT EXISTS attempt_questions_source ON placement_attempt_questions(questionId);
       CREATE TRIGGER IF NOT EXISTS unique_student_enrollment_insert BEFORE INSERT ON enrollments WHEN NEW.userId IS NOT NULL AND NEW.status!='cancelled' AND EXISTS(SELECT 1 FROM enrollments WHERE userId=NEW.userId AND classId=NEW.classId AND status!='cancelled') BEGIN SELECT RAISE(ABORT, 'UNIQUE constraint failed: enrollments.userId, enrollments.classId'); END;
       CREATE TRIGGER IF NOT EXISTS unique_student_enrollment_update BEFORE UPDATE OF userId,classId,status ON enrollments WHEN NEW.userId IS NOT NULL AND NEW.status!='cancelled' AND EXISTS(SELECT 1 FROM enrollments WHERE userId=NEW.userId AND classId=NEW.classId AND status!='cancelled' AND id!=NEW.id) BEGIN SELECT RAISE(ABORT, 'UNIQUE constraint failed: enrollments.userId, enrollments.classId'); END;
     `);
@@ -115,7 +141,7 @@ export function migrate(db) {
         );
       }
       db.prepare(
-        "INSERT INTO metadata VALUES ('structured-schedules-v1','1')",
+        "INSERT INTO metadata(key,value) VALUES ('structured-schedules-v1','1')",
       ).run();
     }
     db.exec("COMMIT");
