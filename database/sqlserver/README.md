@@ -1,6 +1,6 @@
 # Database SQL Server — Trung tâm ngoại ngữ
 
-Bản SQL Server dựa trên 16 bảng thực tế của dự án Vinh Language Center, gồm hồ sơ CV và bài kiểm tra giáo viên. Bản cập nhật 31/10/2026 hỗ trợ **16 ngôn ngữ, 99 khóa học, 24 giáo viên, 302 lớp và 463 câu hỏi** (288 câu năng lực mới, 175 câu khảo sát cũ). Có đầy đủ script tạo bảng, khóa chính/ngoại, dữ liệu mẫu và truy vấn để thực hành trong SQL Server Management Studio (SSMS).
+Bản SQL Server có **17 bảng, 19 khóa ngoại**, tất cả bảng ứng dụng đều được nối trong sơ đồ. Bản cập nhật 05/11/2026 bổ sung tác giả tin tức, người cập nhật metadata và bảng nối câu hỏi với lượt kiểm tra. Dữ liệu mẫu có **16 ngôn ngữ, 99 khóa học, 24 giáo viên, 302 lớp và 463 câu hỏi** (288 câu năng lực, 175 câu khảo sát cũ).
 
 ## Mở database đã tạo trên máy này
 
@@ -14,11 +14,11 @@ Bản SQL Server dựa trên 16 bảng thực tế của dự án Vinh Language 
 
 Cần SQL Server 2016 trở lên và SSMS, quyền tạo database. Mở từng file trong SSMS và chạy theo thứ tự:
 
-1. **`01-schema.sql`**: tạo database `TrungTamNgoaiNgu`, 16 bảng, các index và 3 view. File từ chối ghi đè nếu database đã có bảng.
+1. **`01-schema.sql`**: tạo database `TrungTamNgoaiNgu`, 17 bảng, các index và 3 view. File từ chối ghi đè nếu database đã có bảng.
 2. **`02-sample-data.sql`**: thêm 99 khóa, 24 giáo viên, 302 lớp nhiều ca, 463 câu hỏi, 3 bài viết, 2 tài khoản, 1 đăng ký và 1 yêu cầu tư vấn mẫu. Chạy lại file này sẽ bỏ qua dữ liệu đã nhập, giữ chỉnh sửa hiện có.
 3. **`03-queries.sql`**: 12 nhóm truy vấn minh họa, gồm lọc lớp theo ngôn ngữ/cấp độ, chỉ đọc dữ liệu.
 4. **`04-verify.sql`** (tùy chọn): kiểm tra trên dữ liệu mẫu; các lệnh thử sửa/thêm được rollback.
-5. **`05-verify-relationships.sql`** (tùy chọn): đối chiếu đủ 15 khóa ngoại, kiểu cột, cho phép NULL, hành vi xóa, bản ghi mồ côi và thử ghi/xóa sai liên kết. Tạo bản ghi thử riêng rồi rollback; không yêu cầu dữ liệu mẫu.
+5. **`05-verify-relationships.sql`** (tùy chọn): đối chiếu đủ 19 khóa ngoại và tính liên thông của 17 bảng; kiểm tra kiểu cột, NULL, hành vi xóa, mồ côi và thử ghi/xóa sai liên kết. Bản ghi thử đều rollback; không yêu cầu dữ liệu mẫu.
 
 Lệnh PowerShell tương đương, chạy tại thư mục dự án:
 
@@ -48,6 +48,12 @@ Sao lưu database đã có rồi chạy **`10-teacher-recruitment.sql`**. Bổ s
 
 Đề tuyển dụng được lưu riêng thành bản chụp; không nối khóa ngoại từ câu hỏi JSON đến ngân hàng câu hỏi có thể thay đổi. QTV phải đối chiếu CV, giao đề và chấm tự luận trước khi duyệt; backend kiểm tra quy trình này. Xem [luồng tuyển dụng và API](../../docs/teacher-recruitment.md).
 
+## Nối ba bảng trước đây đứng riêng
+
+Database đã có tuyển dụng: sao lưu rồi chạy **`11-connect-independent-tables.sql`** và **`05-verify-relationships.sql`**. Đã nâng cấp database local và kiểm tra ngày 05/11/2026. Thêm `news.authorId → users.id`, `metadata.updatedBy → users.id` và bảng `placement_attempt_questions` nối `questions` với `placement_attempts`. Bài cũ giữ nguyên nội dung và được bổ sung các dòng nối; chạy lại không tạo trùng. Bài viết cũ không rõ tác giả giữ NULL.
+
+Trong SSMS: **Object Explorer → Refresh**, đóng/mở lại Database Diagram, chuột phải vùng trống **Add Table → placement_attempt_questions → Add → Close**, rồi lưu sơ đồ. Sơ đồ cũ có thể chưa chứa bảng vừa thêm. Xem [quy tắc liên kết](../../docs/CONNECTED-TABLES.md).
+
 ## Các bảng và vai trò
 
 | Bảng | Chức năng | Quan hệ chính |
@@ -61,11 +67,12 @@ Sao lưu database đã có rồi chạy **`10-teacher-recruitment.sql`**. Bổ s
 | `placement_attempts` | Lượt làm bài, bộ câu hỏi cố định, hạn nộp | `userId` |
 | `placement_results` | Kết quả kiểm tra và trình độ gợi ý | `userId` |
 | `materials` | Tài liệu nhị phân, tên tệp, loại tệp, kích thước | `classId` |
-| `news` | Bài viết và tin tức | Độc lập |
+| `news` | Bài viết và tin tức | `authorId → users.id` |
 | `contacts` | Yêu cầu tư vấn/học thử, ghi chú xử lý | `courseId` |
 | `sessions` | Mã phiên đã băm và hạn đăng nhập | `userId` |
 | `audit_logs` | Nhật ký thao tác quản trị | `actorId` |
-| `metadata` | Phiên bản dữ liệu/đánh dấu nhập mẫu | Khóa `key` |
+| `metadata` | Dấu mốc hệ thống và người cập nhật nội dung | `updatedBy → users.id` |
+| `placement_attempt_questions` | Câu hỏi của từng lượt thi, nội dung cố định, lựa chọn đã nộp | `attemptToken`, `questionId` |
 | `teacher_applications` | CV riêng tư, ngôn ngữ/cấp độ, kinh nghiệm, quyết định tuyển dụng | `userId`, `reviewedBy` |
 | `teacher_assessments` | Các lần giao đề, trắc nghiệm, tự luận, lưu nháp và hạn nộp | `applicationId`, `createdBy` |
 
@@ -88,9 +95,13 @@ erDiagram
     users o|--o{ teacher_applications : "đánh giá qua reviewedBy"
     teacher_applications ||--o{ teacher_assessments : "giao đề"
     users ||--o{ teacher_assessments : "ra đề qua createdBy"
+    users o|--o{ news : "tác giả qua authorId"
+    users o|--o{ metadata : "cập nhật qua updatedBy"
+    placement_attempts ||--o{ placement_attempt_questions : "gồm các câu"
+    questions o|--o{ placement_attempt_questions : "nguồn câu hỏi"
 ```
 
-Hai liên kết từ `users` đến `enrollments` có vai trò khác nhau: `userId` là học viên, `verifiedBy` là người xác minh. Các bảng câu hỏi, tin tức và metadata độc lập nên không nằm trong sơ đồ quan hệ trên. Bộ câu hỏi của lượt làm bài và phần xem lại kết quả được lưu JSON như một bản chụp; không có khóa ngoại từ JSON đến bảng câu hỏi đang được chỉnh sửa.
+Hai liên kết từ `users` đến `enrollments` có vai trò khác nhau: `userId` là học viên, `verifiedBy` là người xác minh. Câu hỏi liên kết qua `placement_attempt_questions`; bản chụp `snapshot` giữ đề cũ nếu câu nguồn bị sửa/xóa. JSON trong lượt thi và kết quả vẫn được giữ để tương thích. Cả 17 bảng đều có quan hệ trong sơ đồ trên.
 
 ## Kiểu dữ liệu và ràng buộc
 
@@ -115,9 +126,9 @@ Tài khoản mẫu trong bản SQL Server: `admin@vinhenglish.vn` / `Admin@12345
 ## Kiểm tra thực tế
 
 - Tạo schema và nhập mẫu trên SQL Server 2022 thành công.
-- 16 bảng, 3 view; số bản ghi khóa/giáo viên/lớp/câu hỏi sau nâng cấp là 99/24/302/463, gồm 16 ngôn ngữ. Trong đó có 288 câu năng lực, mỗi nhóm đủ từ vựng/ngữ pháp/đọc hiểu. Hai bảng tuyển dụng khởi tạo trống, không tạo CV giả.
+- 17 bảng, 3 view; dữ liệu mẫu khóa/giáo viên/lớp/câu hỏi là 99/24/302/463, gồm 16 ngôn ngữ. Không tạo CV hoặc bài làm giả trong dữ liệu mẫu.
 - File kiểm tra có 12 tình huống dữ liệu sai phải bị từ chối và 1 tình huống cho phép đăng ký lại sau khi hủy; mọi thay đổi thử rollback.
 - Chạy lại file dữ liệu mẫu không thêm bản ghi trùng. Chạy lại file schema từ chối ghi đè.
-- Đối chiếu 15 khóa ngoại đang bật và được SQL Server tin cậy; không có bản ghi mồ côi. Thử ID sai ở đủ 15 liên kết, 6 trường hợp xóa bị chặn và 4 hành vi CASCADE/SET NULL: đạt. Xem [báo cáo quan hệ](RELATIONSHIP-REVIEW.md).
+- Đối chiếu 19 khóa ngoại đang bật và được SQL Server tin cậy; không có bản ghi mồ côi. 19 ghi ID sai, 6 trường hợp xóa bị chặn và 8 hành vi CASCADE/SET NULL: đạt. Kiểm tra toàn bộ 17 bảng nằm trong cùng một sơ đồ nối: đạt. Xem [báo cáo quan hệ](RELATIONSHIP-REVIEW.md).
 
 Giữ những file này để nộp đồ án hoặc tạo lại database; không cần `.bak` để chạy script.

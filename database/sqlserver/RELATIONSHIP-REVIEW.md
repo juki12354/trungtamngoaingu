@@ -1,6 +1,6 @@
-# Kiểm tra quan hệ bảng — cập nhật 31/10/2026
+# Kiểm tra quan hệ bảng — cập nhật 05/11/2026
 
-**Kết luận: 15 khóa ngoại trong bản SQL Server đều đúng với mô hình hiện tại của website.** Đã đối chiếu file `01-schema.sql` với metadata của database `TrungTamNgoaiNgu` trên instance `manh\MAYAO`, sau đó thử thao tác thật trong transaction được rollback. Bốn liên kết mới phục vụ CV và bài kiểm tra tuyển dụng giáo viên.
+**Kết luận: 19 khóa ngoại đúng và toàn bộ 17 bảng ứng dụng nằm trong cùng một sơ đồ nối.** Đã đối chiếu schema với database `TrungTamNgoaiNgu` trên instance `manh\MAYAO` và thử ghi/xóa trong transaction rollback. Bốn liên kết mới nối tin tức, metadata và ngân hàng câu hỏi.
 
 ## Toàn bộ liên kết
 
@@ -23,8 +23,12 @@ Mỗi dòng là một quan hệ một–nhiều từ bảng cha đến bảng co
 | `teacher_applications.reviewedBy` | `users.id` | Có | Chặn khi còn đánh giá tuyển dụng | Đúng |
 | `teacher_assessments.applicationId` | `teacher_applications.id` | Không | Chặn khi hồ sơ còn đề/bài làm | Đúng |
 | `teacher_assessments.createdBy` | `users.id` | Không | Chặn khi còn đề do QTV giao | Đúng |
+| `news.authorId` | `users.id` | Có | Đặt NULL, giữ bài viết | Đúng |
+| `metadata.updatedBy` | `users.id` | Có | Đặt NULL, giữ dấu mốc | Đúng |
+| `placement_attempt_questions.attemptToken` | `placement_attempts.token` | Không | Xóa dòng câu hỏi theo lượt thi | Đúng |
+| `placement_attempt_questions.questionId` | `questions.id` | Có | Đặt NULL, giữ bản chụp đề | Đúng |
 
-Toàn bộ cột khóa ngoại có kiểu `INT` tương ứng với khóa chính `INT`. Cả 15 khóa ngoại có `is_disabled=0`, `is_not_trusted=0`; hành vi cập nhật khóa chính là `NO ACTION`.
+Cột `attemptToken` và khóa cha `token` cùng kiểu `VARCHAR(128)`; các khóa còn lại cùng kiểu `INT`. Cả 19 khóa ngoại có `is_disabled=0`, `is_not_trusted=0`; hành vi cập nhật khóa chính là `NO ACTION`.
 
 Một học viên đăng ký nhiều lớp và một lớp có nhiều học viên: đây là quan hệ nhiều–nhiều được tách qua bảng `enrollments`, đúng thiết kế. Không cần thêm liên kết trực tiếp từ học viên đến khóa học vì đã xác định được qua `enrollments → classes → courses`.
 
@@ -32,11 +36,11 @@ Một học viên đăng ký nhiều lớp và một lớp có nhiều học vi�
 
 File thực thi: [05-verify-relationships.sql](05-verify-relationships.sql).
 
-- So khớp 15 liên kết dự kiến với database thật, gồm đích, kiểu dữ liệu, NULL, trạng thái và hành vi xóa: đạt.
-- Kiểm tra toàn bộ 15 liên kết bằng LEFT JOIN: **0 bản ghi mồ côi**.
-- Thử ghi ID cha không tồn tại tại từng cột khóa ngoại: **15/15 bị chặn với lỗi 547**.
+- So khớp 19 liên kết dự kiến với database thật: đạt. Duyệt đồ thị từ `users` đến được đủ 17 bảng ứng dụng.
+- Kiểm tra toàn bộ 19 liên kết bằng LEFT JOIN: **0 bản ghi mồ côi**.
+- Thử ghi khóa cha không tồn tại tại từng cột khóa ngoại: **19/19 bị chặn với lỗi 547**.
 - Thử xóa cha còn liên kết, gồm hồ sơ còn bài kiểm tra và tài khoản còn dữ liệu tuyển dụng: **6/6 bị chặn**.
-- Sau khi gỡ các liên kết đang chặn: xóa tài khoản thu hồi phiên, giữ kết quả thi và nhật ký với khóa ngoại NULL; xóa khóa học giữ yêu cầu tư vấn với `courseId=NULL`: **4/4 hành vi đạt**.
+- Kiểm tra CASCADE/SET NULL: giữ bản chụp sau xóa câu nguồn; xóa dòng nối theo lượt thi; giữ bài viết và metadata sau xóa tài khoản; cùng các hành vi cũ: **8/8 đạt**.
 - `DBCC CHECKCONSTRAINTS WITH ALL_CONSTRAINTS`: không trả bản ghi vi phạm.
 - Tất cả bản ghi thử đã rollback; giá trị ID tự tăng có thể có khoảng trống bình thường sau các lần thử.
 
@@ -44,7 +48,7 @@ File thực thi: [05-verify-relationships.sql](05-verify-relationships.sql).
 
 ## Các điểm cần hiểu khi xem sơ đồ
 
-1. `questions`, `news`, `metadata` là bảng độc lập trong thiết kế này. Bộ câu hỏi giao cho từng lượt thi được chụp vào `placement_attempts.questions`; phần xem lại nằm trong JSON của kết quả. Giữ bản chụp giúp sửa/xóa câu hỏi gốc không làm đổi đề thi cũ. Không có khóa ngoại trực tiếp từ các trường JSON.
+1. `questions`, `news`, `metadata` đã có liên kết thật qua bảng nối lượt thi, tác giả và người cập nhật. Nội dung đề tại thời điểm giao nằm trong `placement_attempt_questions.snapshot`; sửa/xóa câu nguồn không làm đổi đề. JSON cũ vẫn được giữ cho lịch sử và tương thích.
 2. `enrollments.verifiedBy` là liên kết thứ hai đến `users`, khác với `enrollments.userId`. Đã bổ sung liên kết này vào sơ đồ README.
 3. `audit_logs.recordId` tham chiếu nghiệp vụ theo `resource` như tài liệu, đăng ký… nên không thể dùng một khóa ngoại duy nhất đến tất cả bảng. Nhật ký cần được giữ ngay cả sau khi đối tượng bị xóa.
 4. Cơ sở, phòng và thứ/giờ học đang lưu trong `classes`. Không có bảng cơ sở/phòng/lịch riêng để nối; đây là phạm vi thiết kế hiện tại. Khi cần quản lý cơ sở và phòng độc lập có thể chuẩn hóa thêm các bảng đó.
@@ -57,6 +61,6 @@ Các liên kết hiện tại bảo đảm ID tồn tại và hành vi xóa đú
 - Chống trùng lịch giáo viên/phòng, chống duyệt vượt sĩ số và liên kết lượt thi với kết quả đang nằm trong backend/JSON, không được thực thi chỉ bằng khóa ngoại.
 - Điểm kỹ năng, danh sách thứ học và lựa chọn câu hỏi là JSON; kiểm tra `ISJSON` chỉ bảo đảm cú pháp. Cấu trúc và giá trị bên trong cần validation nghiệp vụ.
 
-Không phát hiện khóa ngoại trỏ nhầm hoặc cần đổi bảng đích. Bản cập nhật tuyển dụng bổ sung hai bảng, tổng cộng 16 bảng. Quyền QTV và điều kiện hoàn thành bài kiểm tra mới nhất trước khi duyệt được backend thực thi, không suy ra từ khóa ngoại.
+Không phát hiện khóa ngoại trỏ nhầm. Bản cập nhật liên kết bổ sung một bảng nối, tổng cộng 17 bảng. Quyền QTV và điều kiện hoàn thành bài kiểm tra mới nhất trước khi duyệt vẫn được backend thực thi.
 
-Database có thêm `dbo.sysdiagrams` do chức năng Database Diagrams của SSMS tạo. Đây là bảng lưu sơ đồ, không phải bảng nghiệp vụ thiếu liên kết. Bộ kiểm tra không đếm bảng này vào 16 bảng ứng dụng.
+`dbo.sysdiagrams` do SSMS tạo để lưu sơ đồ, không phải bảng nghiệp vụ. Bộ kiểm tra không đếm bảng này vào 17 bảng ứng dụng. Sau nâng cấp, mở lại sơ đồ và Add Table `placement_attempt_questions` để thấy đầy đủ đường nối mới.

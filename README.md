@@ -6,6 +6,10 @@ Bản cập nhật ngày 31/10/2026 hỗ trợ **Anh, Trung, Hàn, Nhật, Pháp
 
 Chạy `npm.cmd run backup` rồi `npm.cmd run seed:languages` để nâng cấp database local; ứng dụng cũng tự nâng cấp khi khởi động. Bộ SQL Server trong [database/sqlserver](database/sqlserver/README.md) có script nâng cấp riêng cho database đã tạo.
 
+## Quan hệ dữ liệu
+
+Bản cập nhật 05/11/2026: nối đầy đủ 17 bảng qua 19 khóa ngoại; `news` có tác giả, `metadata` có người cập nhật và câu hỏi được nối với lượt kiểm tra. Xem [các quan hệ mới và cách cập nhật sơ đồ SSMS](docs/CONNECTED-TABLES.md). Database SQL Server đã có chạy script `11`; SQLite/PostgreSQL tự nâng cấp khi khởi động.
+
 ## Tuyển dụng giáo viên
 
 Vào **Giáo viên → Ứng tuyển giáo viên** (`/ung-tuyen`), đăng nhập/tạo tài khoản và gửi CV PDF/DOCX tối đa 5 MB kèm ngôn ngữ/cấp độ, chứng chỉ và kinh nghiệm. QTV vào **Admin → Tuyển dụng giáo viên** để đọc CV, xác nhận cấp độ và giao đề tương ứng; có thể sửa hai nhiệm vụ tự luận theo CV. Ứng viên làm bài trong 60 phút, lưu nháp tự động và nộp trên cùng trang. QTV chấm tự luận, ghi phản hồi rồi duyệt/không duyệt. Hệ thống chặn duyệt khi chưa hoàn thành đề mới nhất và giữ CV, ghi chú nội bộ riêng tư.

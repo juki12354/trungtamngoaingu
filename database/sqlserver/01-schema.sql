@@ -139,6 +139,7 @@ BEGIN TRY
 
     CREATE TABLE dbo.news (
         id int IDENTITY(1,1) CONSTRAINT PK_news PRIMARY KEY,
+        authorId int NULL CONSTRAINT FK_news_authors REFERENCES dbo.users(id) ON DELETE SET NULL,
         title nvarchar(500) NOT NULL,
         category nvarchar(100) NOT NULL,
         [date] date NOT NULL,
@@ -167,7 +168,9 @@ BEGIN TRY
 
     CREATE TABLE dbo.metadata (
         [key] nvarchar(200) CONSTRAINT PK_metadata PRIMARY KEY,
-        value nvarchar(max) NOT NULL
+        value nvarchar(max) NOT NULL,
+        updatedBy int NULL CONSTRAINT FK_metadata_editors REFERENCES dbo.users(id) ON DELETE SET NULL,
+        updatedAt datetime2(3) NULL
     );
 
     CREATE TABLE dbo.placement_attempts (
@@ -182,6 +185,17 @@ BEGIN TRY
         CONSTRAINT CK_attempts_result CHECK (result IS NULL OR ISJSON(result)=1),
         CONSTRAINT CK_attempts_expiry CHECK (expires > 0)
     );
+
+    CREATE TABLE dbo.placement_attempt_questions (
+        id int IDENTITY(1,1) CONSTRAINT PK_placement_attempt_questions PRIMARY KEY,
+        attemptToken varchar(128) NOT NULL CONSTRAINT FK_attempt_questions_attempts REFERENCES dbo.placement_attempts(token) ON DELETE CASCADE,
+        questionId int NULL CONSTRAINT FK_attempt_questions_questions REFERENCES dbo.questions(id) ON DELETE SET NULL,
+        position int NOT NULL CHECK(position>0),
+        snapshot nvarchar(max) NOT NULL CHECK(ISJSON(snapshot)=1),
+        selected tinyint NULL CHECK(selected BETWEEN 0 AND 3),
+        CONSTRAINT UQ_attempt_question_position UNIQUE(attemptToken,position)
+    );
+    CREATE INDEX IX_attempt_questions_source ON dbo.placement_attempt_questions(questionId);
 
     CREATE TABLE dbo.materials (
         id int IDENTITY(1,1) CONSTRAINT PK_materials PRIMARY KEY,
@@ -286,7 +300,7 @@ BEGIN TRY
         FROM dbo.users WHERE role=''student'';');
 
     COMMIT;
-    PRINT N'Đã tạo 16 bảng và 3 view trong TrungTamNgoaiNgu.';
+    PRINT N'Đã tạo 17 bảng và 3 view trong TrungTamNgoaiNgu.';
 END TRY
 BEGIN CATCH
     IF XACT_STATE() <> 0 ROLLBACK;

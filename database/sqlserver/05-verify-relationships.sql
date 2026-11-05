@@ -17,9 +17,9 @@ SET LOCK_TIMEOUT 15000;
 
 DECLARE @Expected TABLE (
     childTable sysname, childColumn sysname, parentTable sysname,
-    deleteAction nvarchar(60), nullable bit
+    deleteAction nvarchar(60), nullable bit, parentColumn sysname NOT NULL DEFAULT N'id'
 );
-INSERT INTO @Expected VALUES
+INSERT INTO @Expected(childTable,childColumn,parentTable,deleteAction,nullable) VALUES
 ('classes','courseId','courses','NO_ACTION',0),
 ('classes','teacherId','teachers','NO_ACTION',0),
 ('enrollments','userId','users','NO_ACTION',1),
@@ -34,10 +34,15 @@ INSERT INTO @Expected VALUES
 ('teacher_applications','userId','users','NO_ACTION',0),
 ('teacher_applications','reviewedBy','users','NO_ACTION',1),
 ('teacher_assessments','applicationId','teacher_applications','NO_ACTION',0),
-('teacher_assessments','createdBy','users','NO_ACTION',0);
+('teacher_assessments','createdBy','users','NO_ACTION',0),
+('news','authorId','users','SET_NULL',1),
+('metadata','updatedBy','users','SET_NULL',1),
+('placement_attempt_questions','attemptToken','placement_attempts','CASCADE',0),
+('placement_attempt_questions','questionId','questions','SET_NULL',1);
+UPDATE @Expected SET parentColumn=N'token' WHERE childTable=N'placement_attempt_questions' AND childColumn=N'attemptToken';
 
-IF (SELECT COUNT(*) FROM sys.foreign_keys WHERE schema_id=SCHEMA_ID(N'dbo')) <> 15
-    THROW 51200, 'Expected exactly 15 foreign keys.', 1;
+IF (SELECT COUNT(*) FROM sys.foreign_keys WHERE schema_id=SCHEMA_ID(N'dbo')) <> 19
+    THROW 51200, 'Expected exactly 19 foreign keys.', 1;
 
 IF EXISTS (
     SELECT 1 FROM @Expected e
@@ -48,7 +53,7 @@ IF EXISTS (
         JOIN sys.columns pc ON pc.object_id=fc.referenced_object_id AND pc.column_id=fc.referenced_column_id
         WHERE fk.parent_object_id=OBJECT_ID(N'dbo.'+e.childTable)
           AND fk.referenced_object_id=OBJECT_ID(N'dbo.'+e.parentTable)
-          AND cc.name COLLATE DATABASE_DEFAULT=e.childColumn AND pc.name=N'id'
+          AND cc.name COLLATE DATABASE_DEFAULT=e.childColumn AND pc.name COLLATE DATABASE_DEFAULT=e.parentColumn
           AND cc.system_type_id=pc.system_type_id AND cc.max_length=pc.max_length
           AND cc.is_nullable=e.nullable
           AND fk.delete_referential_action_desc COLLATE DATABASE_DEFAULT=e.deleteAction
@@ -57,20 +62,35 @@ IF EXISTS (
     )
 ) THROW 51201, 'Foreign key target, type, nullability, action or trust mismatch.', 1;
 
-DECLARE @child sysname,@column sysname,@parent sysname,@sql nvarchar(max),@orphans bigint;
+DECLARE @Connected TABLE(objectId int PRIMARY KEY);
+INSERT INTO @Connected VALUES(OBJECT_ID(N'dbo.users'));
+WHILE 1=1
+BEGIN
+    INSERT INTO @Connected
+    SELECT fk.parent_object_id FROM sys.foreign_keys fk JOIN @Connected c ON c.objectId=fk.referenced_object_id
+    UNION
+    SELECT fk.referenced_object_id FROM sys.foreign_keys fk JOIN @Connected c ON c.objectId=fk.parent_object_id
+    EXCEPT SELECT objectId FROM @Connected;
+    IF @@ROWCOUNT=0 BREAK;
+END;
+IF EXISTS(SELECT 1 FROM sys.tables t WHERE t.schema_id=SCHEMA_ID(N'dbo') AND t.is_ms_shipped=0 AND t.name<>N'sysdiagrams'
+    AND NOT EXISTS(SELECT 1 FROM @Connected c WHERE c.objectId=t.object_id)) THROW 51210, 'Disconnected application table found.', 1;
+PRINT N'PASS: All 17 application tables are connected.';
+
+DECLARE @child sysname,@column sysname,@parent sysname,@parentColumn sysname,@sql nvarchar(max),@orphans bigint;
 DECLARE RelationCursor CURSOR LOCAL FAST_FORWARD FOR
-    SELECT childTable,childColumn,parentTable FROM @Expected;
+    SELECT childTable,childColumn,parentTable,parentColumn FROM @Expected;
 OPEN RelationCursor;
-FETCH NEXT FROM RelationCursor INTO @child,@column,@parent;
+FETCH NEXT FROM RelationCursor INTO @child,@column,@parent,@parentColumn;
 WHILE @@FETCH_STATUS=0
 BEGIN
     SET @sql=N'SELECT @n=COUNT_BIG(*) FROM dbo.'+QUOTENAME(@child)+N' c LEFT JOIN dbo.'
-        +QUOTENAME(@parent)+N' p ON p.id=c.'+QUOTENAME(@column)
-        +N' WHERE c.'+QUOTENAME(@column)+N' IS NOT NULL AND p.id IS NULL';
+        +QUOTENAME(@parent)+N' p ON p.'+QUOTENAME(@parentColumn)+N'=c.'+QUOTENAME(@column)
+        +N' WHERE c.'+QUOTENAME(@column)+N' IS NOT NULL AND p.'+QUOTENAME(@parentColumn)+N' IS NULL';
     EXEC sp_executesql @sql,N'@n bigint OUTPUT',@n=@orphans OUTPUT;
     IF @orphans<>0 THROW 51202, 'Orphan records detected.', 1;
-    PRINT N'PASS: '+@child+N'.'+@column+N' -> '+@parent+N'.id; no orphans';
-    FETCH NEXT FROM RelationCursor INTO @child,@column,@parent;
+    PRINT N'PASS: '+@child+N'.'+@column+N' -> '+@parent+N'.'+@parentColumn+N'; no orphans';
+    FETCH NEXT FROM RelationCursor INTO @child,@column,@parent,@parentColumn;
 END;
 CLOSE RelationCursor;
 DEALLOCATE RelationCursor;
@@ -78,7 +98,7 @@ DEALLOCATE RelationCursor;
 BEGIN TRY
     BEGIN TRANSACTION;
     DECLARE @user int,@course int,@teacher int,@class int,@enrollment int,
-            @result int,@material int,@contact int,@audit int,@application int,@assessment int,
+            @result int,@material int,@contact int,@audit int,@application int,@assessment int,@news int,@question int,@link int,
             @token varchar(64)=REPLACE(CONVERT(varchar(36),NEWID()),'-',''),
             @missing int=-2147483648;
     IF EXISTS(SELECT 1 FROM dbo.users WHERE id=@missing)
@@ -86,6 +106,8 @@ BEGIN TRY
        OR EXISTS(SELECT 1 FROM dbo.teachers WHERE id=@missing)
        OR EXISTS(SELECT 1 FROM dbo.classes WHERE id=@missing)
        OR EXISTS(SELECT 1 FROM dbo.teacher_applications WHERE id=@missing)
+       OR EXISTS(SELECT 1 FROM dbo.questions WHERE id=@missing)
+       OR EXISTS(SELECT 1 FROM dbo.placement_attempts WHERE token='__missing_fk_test__')
         THROW 51203, 'Reserved invalid ID exists; cannot run negative tests.', 1;
 
     INSERT INTO dbo.users(name,email,passwordHash,role)
@@ -123,6 +145,15 @@ BEGIN TRY
     VALUES(@application,'ja','N2',N'CV đã được đối chiếu',N'[]',N'[]',@user);
     SET @assessment=CONVERT(int,SCOPE_IDENTITY());
 
+    INSERT INTO dbo.news(title,category,[date],excerpt,content,authorId)
+    VALUES(N'Relationship check',N'Test','20300101',N'Test',N'Test',@user);
+    SET @news=CONVERT(int,SCOPE_IDENTITY());
+    INSERT INTO dbo.metadata([key],value,updatedBy,updatedAt) VALUES(@token,N'Test',@user,SYSUTCDATETIME());
+    INSERT INTO dbo.questions(prompt,options,answer) VALUES(N'Relationship check',N'["A","B","C","D"]',0);
+    SET @question=CONVERT(int,SCOPE_IDENTITY());
+    INSERT INTO dbo.placement_attempt_questions(attemptToken,questionId,position,snapshot) VALUES(@token,@question,1,N'{"prompt":"Snapshot retained"}');
+    SET @link=CONVERT(int,SCOPE_IDENTITY());
+
     DECLARE @Checks TABLE (id int IDENTITY PRIMARY KEY, label nvarchar(150), command nvarchar(max));
     INSERT INTO @Checks VALUES
     (N'classes.courseId',N'UPDATE dbo.classes SET courseId=@bad WHERE id=@class'),
@@ -140,6 +171,10 @@ BEGIN TRY
     (N'teacher_applications.reviewedBy',N'UPDATE dbo.teacher_applications SET reviewedBy=@bad WHERE id=@application'),
     (N'teacher_assessments.applicationId',N'UPDATE dbo.teacher_assessments SET applicationId=@bad WHERE id=@assessment'),
     (N'teacher_assessments.createdBy',N'UPDATE dbo.teacher_assessments SET createdBy=@bad WHERE id=@assessment'),
+    (N'news.authorId',N'UPDATE dbo.news SET authorId=@bad WHERE id=@news'),
+    (N'metadata.updatedBy',N'UPDATE dbo.metadata SET updatedBy=@bad WHERE [key]=@token'),
+    (N'placement_attempt_questions.questionId',N'UPDATE dbo.placement_attempt_questions SET questionId=@bad WHERE id=@link'),
+    (N'placement_attempt_questions.attemptToken',N'UPDATE dbo.placement_attempt_questions SET attemptToken=''__missing_fk_test__'' WHERE id=@link'),
     (N'Chặn xóa hồ sơ đang có bài kiểm tra',N'DELETE FROM dbo.teacher_applications WHERE id=@application'),
     (N'Chặn xóa khóa học đang có lớp',N'DELETE FROM dbo.courses WHERE id=@course'),
     (N'Chặn xóa giáo viên đang dạy lớp',N'DELETE FROM dbo.teachers WHERE id=@teacher'),
@@ -153,9 +188,9 @@ BEGIN TRY
         SET @error=0;
         BEGIN TRY
             EXEC sp_executesql @sql,
-                N'@bad int,@user int,@course int,@teacher int,@class int,@enrollment int,@result int,@material int,@contact int,@audit int,@token varchar(64),@application int,@assessment int',
+                N'@bad int,@user int,@course int,@teacher int,@class int,@enrollment int,@result int,@material int,@contact int,@audit int,@token varchar(64),@application int,@assessment int,@news int,@link int',
                 @bad=@missing,@user=@user,@course=@course,@teacher=@teacher,@class=@class,@enrollment=@enrollment,
-                @result=@result,@material=@material,@contact=@contact,@audit=@audit,@token=@token,@application=@application,@assessment=@assessment;
+                @result=@result,@material=@material,@contact=@contact,@audit=@audit,@token=@token,@application=@application,@assessment=@assessment,@news=@news,@link=@link;
         END TRY
         BEGIN CATCH
             SET @error=ERROR_NUMBER();
@@ -171,7 +206,11 @@ BEGIN TRY
 
     -- Release blocking references to test CASCADE and SET NULL explicitly.
     UPDATE dbo.enrollments SET userId=NULL,verifiedBy=NULL WHERE id=@enrollment;
+    DELETE FROM dbo.questions WHERE id=@question;
+    IF NOT EXISTS(SELECT 1 FROM dbo.placement_attempt_questions WHERE id=@link AND questionId IS NULL AND snapshot=N'{"prompt":"Snapshot retained"}')
+        THROW 51211, 'Question deletion failed to preserve exam snapshot.', 1;
     DELETE FROM dbo.placement_attempts WHERE token=@token;
+    IF EXISTS(SELECT 1 FROM dbo.placement_attempt_questions WHERE id=@link) THROW 51212, 'Attempt question cascade failed.', 1;
     -- The recruitment record must still block user deletion after learning links are released.
     DECLARE @recruitmentDeleteError int=0;
     BEGIN TRY
@@ -184,6 +223,8 @@ BEGIN TRY
     DELETE FROM dbo.teacher_assessments WHERE id=@assessment;
     DELETE FROM dbo.teacher_applications WHERE id=@application;
     DELETE FROM dbo.users WHERE id=@user;
+    IF NOT EXISTS(SELECT 1 FROM dbo.news WHERE id=@news AND authorId IS NULL) THROW 51213, 'News preservation failed.', 1;
+    IF NOT EXISTS(SELECT 1 FROM dbo.metadata WHERE [key]=@token AND updatedBy IS NULL) THROW 51214, 'Metadata preservation failed.', 1;
     IF EXISTS(SELECT 1 FROM dbo.sessions WHERE token=@token)
         THROW 51205, 'Session cascade failed.', 1;
     IF NOT EXISTS(SELECT 1 FROM dbo.placement_results WHERE id=@result AND userId IS NULL)
@@ -201,7 +242,7 @@ BEGIN TRY
     PRINT N'PASS: Xóa khóa học giữ yêu cầu tư vấn, đặt courseId=NULL';
 
     ROLLBACK;
-    PRINT N'PASS: 15 quan hệ, 0 mồ côi, 15 lần chặn ID sai, 6 lần chặn xóa và 4 hành vi CASCADE/SET NULL. Đã rollback.';
+    PRINT N'PASS: 19 quan hệ, 0 mồ côi, 19 lần chặn ID sai, 6 lần chặn xóa và 8 hành vi CASCADE/SET NULL. Đã rollback.';
 END TRY
 BEGIN CATCH
     IF XACT_STATE()<>0 ROLLBACK;
